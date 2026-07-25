@@ -3,8 +3,8 @@ package dev.madmmas.aimanager.prompt;
 /**
  * Hook invoked when a prompt version becomes {@link PromptVersionStatus#ACTIVE}.
  *
- * <p>Phase 5 will write the active prompt config into the Config Server backing store. Until then,
- * the default bean is a no-op / logging stub.
+ * <p>The production bean ({@link JdbcPromptConfigExporter}) upserts prompt fields into the shared
+ * {@code config_properties} table for Spring Cloud Config JDBC mode.
  */
 public interface PromptConfigExporter {
 
