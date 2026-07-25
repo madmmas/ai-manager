@@ -297,6 +297,18 @@ importers:
 
   apps/user-manager:
     dependencies:
+      '@repo/api-client':
+        specifier: workspace:^
+        version: link:../../packages/api-client
+      '@repo/types':
+        specifier: workspace:^
+        version: link:../../packages/types
+      '@repo/ui':
+        specifier: workspace:^
+        version: link:../../packages/ui
+      '@tanstack/react-query':
+        specifier: ^5.83.0
+        version: 5.101.4(react@19.2.8)
       react:
         specifier: ^19.2.8
         version: 19.2.8
