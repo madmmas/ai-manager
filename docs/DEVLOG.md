@@ -28,6 +28,14 @@ reverse-engineer from git history.
 
 ---
 
+## 2026-07-24 — User Manager invite + API key UI (#62)
+
+Wired `apps/user-manager` like the other MFEs: QueryClient + ApiClientProvider
+(`useMocks: true`), federation-shared react-query/api-client, and a single page
+with Users (list + invite) and API keys (project filter, create with show-once
+secret, revoke confirm). Hooks come from #61 (`useUsers` / `useInviteUser` /
+`useApiKeys` / `useCreateApiKey` / `useRevokeApiKey`).
+
 ## 2026-07-24 — API keys hashed + filter before JWT (#61)
 
 Flyway V7 `api_keys` already fit (TEXT[] scopes, `key_hash`, `prefix`, `expires_at`) —
