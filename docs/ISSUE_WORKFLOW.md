@@ -41,10 +41,10 @@ This document describes how to implement the open-source roadmap for **AIPlane**
 | [#16](https://github.com/madmmas/aiplane/issues/16) | Phase 4 — User Management + API Keys | `feat/phase-4-user-manager` | Phase 4 | Open |
 | [#60](https://github.com/madmmas/aiplane/issues/60) | Invite flow + JWT auth | `feat/phase-4-invite-jwt-auth` | Phase 4 | Done ([#88](https://github.com/madmmas/aiplane/pull/88)) |
 | [#61](https://github.com/madmmas/aiplane/issues/61) | API key CRUD + ApiKeyAuthenticationFilter | `feat/phase-4-api-keys` | Phase 4 | Done ([#90](https://github.com/madmmas/aiplane/pull/90)) |
-| [#62](https://github.com/madmmas/aiplane/issues/62) | User + API key management UI | `feat/phase-4-user-manager-ui` | Phase 4 | Done (this PR) |
+| [#62](https://github.com/madmmas/aiplane/issues/62) | User + API key management UI | `feat/phase-4-user-manager-ui` | Phase 4 | Done ([#91](https://github.com/madmmas/aiplane/pull/91)) |
 | [#17](https://github.com/madmmas/aiplane/issues/17) | Phase 5 — Config Server Integration | `feat/phase-5-config-server` | Phase 5 | Open |
 
-**Phase 1–3 complete** (#50–#53, #54–#56, #57–#59). Phase 4 in progress: #60–#62 done on this stack (invite/JWT, API keys, user-manager UI); epic #16 can close once these merge. Config Server export on promote remains Phase 5 ([#17](https://github.com/madmmas/aiplane/issues/17); hook stubbed in #51).
+**Phase 1–3 complete** (#50–#53, #54–#56, #57–#59). Phase 4 UI landed (#60–#62 via #88–#91); epic [#16](https://github.com/madmmas/aiplane/issues/16) pending close. Config Server export on promote remains Phase 5 ([#17](https://github.com/madmmas/aiplane/issues/17); hook stubbed in #51).
 
 ---
 
