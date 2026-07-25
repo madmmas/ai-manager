@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- News Radar Config Server integration reference: `docs/integrations/news-radar-config-server.md` plus `examples/news-radar-config/` (stdlib Go `GET` client, `demo.sh` curl smoke) for promote → JDBC → Environment JSON round-trip (#66)
 - Config Server refresh/environment proxy: `POST /api/v1/config/refresh/{application}` → Config Server `/actuator/refresh`, optional `GET /api/v1/config/{application}/{profile}`; API key scopes `config:refresh` / `config:read` (JWT ADMIN/DEVELOPER allowed); unreachable Config Server → 502; MockWebServer client + auth ITs (#65)
 - `JdbcPromptConfigExporter`: on version activation, upserts active prompt fields into shared `config_properties` (project slug / `default` / `main`); idempotent via UNIQUE + `ON CONFLICT`; NoOp stub removed (#64)
 - Config Server JDBC backend (`CONFIG_MODE=jdbc` / Spring profile `jdbc`): reads Flyway V9 `config_properties` via quoted `"KEY"` SQL; native mode unchanged; Testcontainers IT asserts HTTP property resolution (#63)
