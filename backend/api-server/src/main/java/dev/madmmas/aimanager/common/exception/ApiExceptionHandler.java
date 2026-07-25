@@ -75,6 +75,11 @@ public class ApiExceptionHandler {
     return body(HttpStatus.BAD_GATEWAY, ex.getMessage());
   }
 
+  @ExceptionHandler(ConfigServerUnreachableException.class)
+  ResponseEntity<Map<String, Object>> configServerUnreachable(ConfigServerUnreachableException ex) {
+    return body(HttpStatus.BAD_GATEWAY, ex.getMessage());
+  }
+
   @ExceptionHandler(MethodArgumentNotValidException.class)
   ResponseEntity<Map<String, Object>> validation(MethodArgumentNotValidException ex) {
     String message =

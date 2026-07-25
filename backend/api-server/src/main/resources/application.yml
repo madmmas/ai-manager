@@ -33,6 +33,8 @@ aiplane:
     access-token-ttl: 15m
     refresh-token-ttl: 7d
     cookie-secure: false
+  config-server:
+    base-url: ${CONFIG_SERVER_URL:http://localhost:8888}
   cors:
     allowed-origins:
       - http://localhost:5173
