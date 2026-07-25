@@ -1022,6 +1022,9 @@ Complete via epic [#15](https://github.com/madmmas/aiplane/issues/15) (sub-issue
 - [x] Cost tracking with provider rate config (#58)
 
 ### Phase 4 — User Management + API Keys
+
+Complete via epic [#16](https://github.com/madmmas/aiplane/issues/16) (sub-issues [#60](https://github.com/madmmas/aiplane/issues/60)–[#62](https://github.com/madmmas/aiplane/issues/62)).
+
 - [x] Invite flow + JWT auth (#60)
 - [x] API key CRUD + permission scopes (#61)
 - [x] `ApiKeyAuthenticationFilter` (#61)
