@@ -28,6 +28,30 @@ reverse-engineer from git history.
 
 ---
 
+## 2026-07-24 — Invite flow + JWT httpOnly cookies (#60)
+
+Phase 4 auth lands with invite → accept-invite → login/refresh/logout. Tokens are
+**httpOnly cookies** (`aiplane_access` ~15m, `aiplane_refresh` ~7d), not JSON body
+fields — this overrides SPEC §3's `accessToken`/`refreshToken` JSON example per
+`.cursor/rules/security.mdc` (browser storage is an XSS footgun). Response bodies
+are `{ user: { id, email, name, roles } }` only.
+
+**CSRF:** disabled for MVP with `SameSite=Lax` on the auth cookies. A cookie-based
+SPA can later add a double-submit CSRF token; we documented the trade-off rather
+than blocking #60 on full CSRF. CORS uses explicit origins from
+`aiplane.cors.allowed-origins` (never `*`) with `allowCredentials=true`.
+
+**Existing controller ITs:** Spring Security would 401 unauthenticated MockMvc
+calls. Strategy: `@WithMockUser(roles = "ADMIN")` on `UsageControllerIT` /
+`GuardrailSetControllerIT`, and `JwtAuthenticationFilter` does **not** clear the
+SecurityContext when no access cookie is present (so the mock user survives).
+`spring-security-test` is on the test classpath. `/actuator/health` stays
+`permitAll`.
+
+API keys / `ApiKeyAuthenticationFilter` stay in #61; user-manager UI in #62.
+
+---
+
 ## 2026-07-24 — Usage overview dashboard KPIs + Recharts (#59)
 
 Built the `usages-data` MFE as a single-page overview (no router for MVP), mirroring

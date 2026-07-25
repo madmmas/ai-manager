@@ -39,9 +39,12 @@ This document describes how to implement the open-source roadmap for **AIPlane**
 | [#58](https://github.com/madmmas/aiplane/issues/58) | Cost tracking with provider rate config | `feat/phase-3-cost-tracking` | Phase 3 | Done ([#85](https://github.com/madmmas/aiplane/pull/85)) |
 | [#59](https://github.com/madmmas/aiplane/issues/59) | Usage overview dashboard UI | `feat/phase-3-usage-dashboard` | Phase 3 | Done ([#86](https://github.com/madmmas/aiplane/pull/86)) |
 | [#16](https://github.com/madmmas/aiplane/issues/16) | Phase 4 — User Management + API Keys | `feat/phase-4-user-manager` | Phase 4 | Open |
+| [#60](https://github.com/madmmas/aiplane/issues/60) | Invite flow + JWT auth | `feat/phase-4-invite-jwt-auth` | Phase 4 | Done (this PR) |
+| [#61](https://github.com/madmmas/aiplane/issues/61) | API key CRUD + ApiKeyAuthenticationFilter | `feat/phase-4-api-keys` | Phase 4 | Open |
+| [#62](https://github.com/madmmas/aiplane/issues/62) | User + API key management UI | `feat/phase-4-user-manager-ui` | Phase 4 | Open |
 | [#17](https://github.com/madmmas/aiplane/issues/17) | Phase 5 — Config Server Integration | `feat/phase-5-config-server` | Phase 5 | Open |
 
-**Phase 1–3 complete** (#50–#53, #54–#56, #57–#59). Config Server export on promote remains Phase 5 ([#17](https://github.com/madmmas/aiplane/issues/17); hook stubbed in #51). Next up: Phase 4 User Management + API Keys ([#16](https://github.com/madmmas/aiplane/issues/16)) or Phase 0 leftovers.
+**Phase 1–3 complete** (#50–#53, #54–#56, #57–#59). Phase 4 in progress: #60 invite/JWT done; next up #61 API keys, then #62 user-manager UI. Config Server export on promote remains Phase 5 ([#17](https://github.com/madmmas/aiplane/issues/17); hook stubbed in #51).
 
 ---
 
