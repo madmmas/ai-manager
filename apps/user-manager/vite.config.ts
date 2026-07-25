@@ -17,8 +17,8 @@ export default defineConfig({
         "./App": "./src/App.tsx",
       },
       shared: {
-        react: { singleton: true, requiredVersion: "^18.3.1" },
-        "react-dom": { singleton: true, requiredVersion: "^18.3.1" },
+        react: { singleton: true, requiredVersion: "^19.0.0" },
+        "react-dom": { singleton: true, requiredVersion: "^19.0.0" },
         "@tanstack/react-query": { singleton: true },
         "@repo/api-client": { singleton: true },
       },
