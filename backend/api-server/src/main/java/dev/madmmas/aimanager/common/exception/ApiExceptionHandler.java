@@ -4,9 +4,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -14,6 +16,26 @@ public class ApiExceptionHandler {
   @ExceptionHandler(ResourceNotFoundException.class)
   ResponseEntity<Map<String, Object>> notFound(ResourceNotFoundException ex) {
     return body(HttpStatus.NOT_FOUND, ex.getMessage());
+  }
+
+  @ExceptionHandler(ConflictException.class)
+  ResponseEntity<Map<String, Object>> conflict(ConflictException ex) {
+    return body(HttpStatus.CONFLICT, ex.getMessage());
+  }
+
+  @ExceptionHandler(BadCredentialsException.class)
+  ResponseEntity<Map<String, Object>> badCredentials(BadCredentialsException ex) {
+    return body(HttpStatus.UNAUTHORIZED, ex.getMessage());
+  }
+
+  @ExceptionHandler(ResponseStatusException.class)
+  ResponseEntity<Map<String, Object>> responseStatus(ResponseStatusException ex) {
+    HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+    if (status == null) {
+      status = HttpStatus.INTERNAL_SERVER_ERROR;
+    }
+    String message = ex.getReason() != null ? ex.getReason() : status.getReasonPhrase();
+    return body(status, message);
   }
 
   @ExceptionHandler(BatchValidationException.class)

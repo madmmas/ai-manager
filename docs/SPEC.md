@@ -396,8 +396,8 @@ public class LLMJudgeEvaluator implements GuardrailEvaluatorStrategy {
 Two parallel auth mechanisms:
 
 **1. JWT (for UI users)**
-- `POST /auth/login` → returns `accessToken` + `refreshToken`
-- `JwtAuthenticationFilter` validates Bearer token on every request
+- `POST /auth/login` and `POST /auth/accept-invite` issue short-lived access + refresh JWTs via **httpOnly cookies** (`aiplane_access`, `aiplane_refresh`) — tokens are **not** returned in the JSON body (see `.cursor/rules/security.mdc`; SPEC originally showed JSON tokens)
+- `JwtAuthenticationFilter` validates the access cookie on every request
 - Roles: `ROLE_ADMIN`, `ROLE_DEVELOPER`, `ROLE_VIEWER` — per project via `ProjectMembership`
 
 **2. API Key (for programmatic clients)**
@@ -445,8 +445,11 @@ db/migration/
 
 **Auth**
 ```
-POST   /auth/login                    → { accessToken, refreshToken }
-POST   /auth/refresh                  → { accessToken }
+POST   /auth/login                    → { user } + Set-Cookie (httpOnly access/refresh)
+POST   /auth/accept-invite            → { user } + Set-Cookie
+POST   /auth/refresh                  → { user } + Set-Cookie (rotated)
+POST   /auth/logout                   → clears cookies
+GET    /auth/me                       → { id, email, name, roles }
 ```
 
 **Projects**
@@ -1019,9 +1022,10 @@ Complete via epic [#15](https://github.com/madmmas/aiplane/issues/15) (sub-issue
 - [x] Cost tracking with provider rate config (#58)
 
 ### Phase 4 — User Management + API Keys
-- [ ] Invite flow + JWT auth
-- [ ] API key CRUD + permission scopes
-- [ ] `ApiKeyAuthenticationFilter`
+- [x] Invite flow + JWT auth (#60)
+- [ ] API key CRUD + permission scopes (#61)
+- [ ] `ApiKeyAuthenticationFilter` (#61)
+- [ ] User + API key management UI (#62)
 
 ### Phase 5 — Config Server Integration
 - [ ] JDBC backend for Config Server
