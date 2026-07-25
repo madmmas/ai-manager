@@ -39,7 +39,7 @@ This document describes how to implement the open-source roadmap for **AIPlane**
 | [#58](https://github.com/madmmas/aiplane/issues/58) | Cost tracking with provider rate config | `feat/phase-3-cost-tracking` | Phase 3 | Done ([#85](https://github.com/madmmas/aiplane/pull/85)) |
 | [#59](https://github.com/madmmas/aiplane/issues/59) | Usage overview dashboard UI | `feat/phase-3-usage-dashboard` | Phase 3 | Done ([#86](https://github.com/madmmas/aiplane/pull/86)) |
 | [#16](https://github.com/madmmas/aiplane/issues/16) | Phase 4 — User Management + API Keys | `feat/phase-4-user-manager` | Phase 4 | Open |
-| [#60](https://github.com/madmmas/aiplane/issues/60) | Invite flow + JWT auth | `feat/phase-4-invite-jwt-auth` | Phase 4 | Done (this PR) |
+| [#60](https://github.com/madmmas/aiplane/issues/60) | Invite flow + JWT auth | `feat/phase-4-invite-jwt-auth` | Phase 4 | Done ([#88](https://github.com/madmmas/aiplane/pull/88)) |
 | [#61](https://github.com/madmmas/aiplane/issues/61) | API key CRUD + ApiKeyAuthenticationFilter | `feat/phase-4-api-keys` | Phase 4 | Open |
 | [#62](https://github.com/madmmas/aiplane/issues/62) | User + API key management UI | `feat/phase-4-user-manager-ui` | Phase 4 | Open |
 | [#17](https://github.com/madmmas/aiplane/issues/17) | Phase 5 — Config Server Integration | `feat/phase-5-config-server` | Phase 5 | Open |
