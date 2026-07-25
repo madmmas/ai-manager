@@ -1,0 +1,71 @@
+---
+description: Database/schema testing conventions specific to the microservices migration — migration correctness, schema isolation, referential integrity, data-move validation.
+globs:
+  - backend/**/src/main/resources/db/migration/**
+  - backend/**/src/test/**
+  - tests/db/**
+alwaysApply: false
+---
+
+# Database Testing Rules
+
+This extends `.cursor/rules/backend-testing.mdc` — the existing JUnit 5 + Testcontainers +
+Flyway pattern (`AbstractPostgresIntegrationTest`, `*IT.java`) does not change and applies to
+every extracted service, not just `api-server`. What follows is specific to the migration
+itself: splitting one schema into several changes what "correct" means at the database layer.
+See `docs/TEST_PLAN.md` section 10 for the full rationale behind each rule below.
+
+## Migration correctness
+- Every new service gets its own integration-test base class following
+  `AbstractPostgresIntegrationTest` exactly — static-initializer container start, not
+  `@Container` on the class (see `.cursor/rules/backend-testing.mdc` for why).
+- `spring.flyway.validate-on-migrate` stays on for every service. A checksum-mismatched
+  migration should fail CI, not surface at deploy time.
+- If a service's Flyway migrations do not behave the same way against a reactive (R2DBC)
+  datasource as they did under blocking JDBC, write that gap down in
+  `tests/db/migration-checklist.md` explicitly — do not silently work around it in a way the
+  next service extraction would have to rediscover.
+
+## Schema isolation — this is an automated check, not just a review rule
+- No service's SQL (migrations, JPA queries, `JdbcTemplate` statements) may reference another
+  service's schema name. `tests/db/check-schema-isolation.sh` enforces this in CI — if you are
+  asked to write or modify a query and it needs data owned by another service, that is a signal
+  to add an internal API call, not a cross-schema join. Flag it rather than working around the
+  check.
+- A service's datasource configuration should only ever resolve to its own schema. Treat a
+  misconfigured connection string as seriously as an actual cross-schema query — it is the more
+  likely real-world failure mode.
+
+## Referential integrity across services
+- Cross-domain references in this codebase are plain scalar IDs (`project_id`, `prompt_id`,
+  `api_key_id`), never a JPA `@ManyToOne` across service boundaries — do not introduce one.
+  This means nothing at the database level stops a dependent row from outliving the record it
+  references once services have separate schemas/databases.
+- Do not write a test that assumes cascade-delete, tombstoning, or "orphans are fine" behavior
+  for cross-service references until that policy is actually decided (`docs/TEST_PLAN.md`
+  section 10.3, open item 5). If asked to write this test before the policy exists, say so
+  instead of guessing at the intended behavior.
+- Once the policy is decided, verify it through the public API (create dependent records,
+  delete the referenced record, assert the decided behavior) — never through a direct
+  cross-schema query, which would itself violate the isolation rule above.
+
+## Data-migration validation (one-time, per phase)
+- Moving a table from the monolith's shared schema into a service's own schema needs: a
+  per-table row-count match against the Phase 0 baseline snapshot, a spot-check of actual row
+  contents (not just counts), and a rehearsal against realistic-shaped data before it runs for
+  real. Document the run in `tests/db/migration-checklist.md`.
+- This is a checklist a human signs off on, not something to fully automate away — the backend
+  engineer performing the extraction drives it, the checklist just makes sure nothing gets
+  skipped under deadline pressure.
+
+## Query performance
+- New queries added during an extraction, especially on `usage-service`'s ingest path, deserve
+  a manual `EXPLAIN ANALYZE` look before merging — R2DBC does not have Hibernate's query-stats
+  tooling, so a missing index is easier to miss by default there specifically.
+
+## Never
+- Never write a test, migration, or query that reaches across a schema boundary "just this
+  once" — the isolation check exists specifically to catch that.
+- Never assume orphaned-reference handling that has not been decided (see above).
+- Never skip the data-migration checklist for a phase because the row counts "look right" —
+  spot-check actual content, not just counts.

@@ -1,0 +1,50 @@
+---
+description: k6 load/performance testing conventions for the gateway and extracted services.
+globs:
+  - tests/load/**
+alwaysApply: false
+---
+
+# Load Testing Rules (k6)
+
+## Runtime — do not treat this like a Node package
+- k6 scripts run inside k6's own Goja-based JS runtime, not Node. There is no `node_modules`
+  and no arbitrary `npm install` at runtime — `tests/load/k6` is intentionally NOT part of the
+  pnpm workspace. Shared logic (`lib/auth.js`, `lib/data.js`) uses plain relative-path ES
+  module imports only.
+- If a scenario needs a capability k6 does not ship with, that is an `xk6` extension/custom
+  binary decision to raise explicitly — do not reach for an npm package that will not resolve.
+
+## Three tiers — know which one you are writing
+- **Smoke** (`*-smoke.js`): 1 VU, 1 iteration. Runs in PR CI on every PR touching `backend/**`.
+  Functional pass/fail, not a real load test — must always pass.
+- **Load** (`*-load.js`): ramping VUs, sustained hold, nightly only. Enforces thresholds via
+  k6's built-in `thresholds` config so a breach fails the run automatically — do not just log
+  the numbers and eyeball them.
+- **Spike** (`*-spike.js`): sudden jump to ~2x normal load for a short window. Scheduled/manual
+  only, informational rather than a hard merge gate.
+- Default proposed thresholds (confirm/override per `docs/TEST_PLAN.md` §14 before treating as
+  final): `p(95)<200ms`, `p(99)<500ms`, `http_req_failed rate<0.001`.
+
+## Auth and test data
+- Fetch a token/cookie once in `setup()`, pass it to every VU. Never let each VU log in
+  independently — that turns a targeted load test into an accidental login-endpoint load test.
+- Each VU/iteration generates its own unique payload via `lib/data.js`. Reusing one fixed
+  project/prompt id at high RPS exercises lock contention and cache behavior that does not
+  represent realistic traffic.
+
+## Never
+- Never point any scenario at a real LLM provider (Anthropic/OpenAI/Azure). Playground-adjacent
+  load scenarios must run against a stubbed/mocked provider — this is a cost and rate-limit
+  risk, not just a correctness concern.
+- Never loosen an agreed threshold to make a run pass without raising it with the team first —
+  see `docs/TEST_PLAN.md` §14 open items.
+
+## Results
+- Smoke run output uploads as a CI artifact (JSON summary).
+- Once the Phase 0 observability stack exists (`docs/MICROSERVICES_PLAN.md` §9), load/spike
+  runs push metrics to the same Prometheus via the `xk6-output-prometheus-remote` output, so
+  results land in the existing Grafana instance rather than a separate dashboard.
+- Phase 2 (`usage-service`) load runs specifically inform the WebFlux/R2DBC go/no-go call
+  (`docs/MICROSERVICES_PLAN.md` §7) — always compare against the prior implementation's
+  baseline numbers, not just an absolute threshold.
