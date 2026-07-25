@@ -1,0 +1,17 @@
+# JDBC backend — reads shared Postgres config_properties (Flyway V9; api-server owns migrations).
+# Env vars match docker-compose.yml / api-server.
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/aimanager}
+    username: ${DB_USERNAME:aimanager}
+    password: ${DB_PASSWORD:changeme}
+  cloud:
+    config:
+      server:
+        jdbc:
+          # V9 quotes "KEY" (reserved); value is unquoted lowercase.
+          # JdbcEnvironmentRepository maps by column position (1=key, 2=value).
+          sql: SELECT "KEY", value FROM config_properties WHERE application=? AND profile=? AND label=?
+          sql-without-profile: SELECT "KEY", value FROM config_properties WHERE application=? AND profile is null AND label=?
+          default-label: main
+          order: 1

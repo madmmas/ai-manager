@@ -45,7 +45,8 @@ alwaysApply: false
   change done.
 
 ## config-server
-- No database: `@SpringBootTest` + `@AutoConfigureMockMvc` smoke tests
-  (`ConfigServerApplicationTests`) are enough until Phase 5 wires Git/JDBC backends.
-- Don't pull Testcontainers into `config-server` unless a future feature actually needs
-  Postgres there.
+- Native smoke: `@SpringBootTest` + `@AutoConfigureMockMvc`
+  (`ConfigServerApplicationTests`) — no Docker.
+- JDBC IT: `ConfigServerJdbcIT` uses Testcontainers Postgres + V9 DDL (Config Server does
+  not run Flyway) and asserts property resolution over HTTP. Keep `DOCKER_API_VERSION=1.44`
+  on Surefire/Failsafe like api-server.

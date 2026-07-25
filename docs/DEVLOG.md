@@ -28,6 +28,20 @@ reverse-engineer from git history.
 
 ---
 
+## 2026-07-24 — Config Server JDBC backend (#63)
+
+Enabled `CONFIG_MODE=jdbc` (Spring profile `jdbc`) with `spring-boot-starter-jdbc` +
+Postgres. SQL must quote V9's `"KEY"` column and select unquoted `value` as the second
+column — `JdbcEnvironmentRepository` maps by position, not name. Set
+`default-label: main` to match V9 (Spring's JDBC default is still `master`).
+
+Native/git profiles exclude `DataSourceAutoConfiguration` so classpath JDBC does not
+break local scaffold. Config Server does **not** run Flyway; ITs apply V9 DDL against
+Testcontainers and assert `GET /{app}/{profile}` resolves the seeded property.
+
+Compose already forwards `DATABASE_URL` / `DB_USERNAME` / `DB_PASSWORD` to
+config-server — switch with `CONFIG_MODE=jdbc` after api-server has migrated.
+
 ## 2026-07-24 — User Manager invite + API key UI (#62)
 
 Wired `apps/user-manager` like the other MFEs: QueryClient + ApiClientProvider

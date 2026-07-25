@@ -1031,10 +1031,10 @@ Complete via epic [#16](https://github.com/madmmas/aiplane/issues/16) (sub-issue
 - [x] User + API key management UI (#62)
 
 ### Phase 5 — Config Server Integration
-- [ ] JDBC backend for Config Server
-- [ ] `PromptConfigExporter` writing on version promotion
-- [ ] Refresh endpoint proxied via API Server
-- [ ] News Radar integration demo (Go client consuming Config Server)
+- [x] JDBC backend for Config Server (#63)
+- [ ] `PromptConfigExporter` writing on version promotion (#64)
+- [ ] Refresh endpoint proxied via API Server (#65)
+- [ ] News Radar integration demo (Go client consuming Config Server) (#66)
 
 ### Phase 6 — Advanced
 - [ ] PII detection guardrail

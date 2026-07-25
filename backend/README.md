@@ -5,7 +5,7 @@ Spring Boot modular monolith for AIPlane (SPEC §3).
 | Module | Port | Role |
 |--------|------|------|
 | `api-server` | 8080 | Main API (`/actuator/health`) |
-| `config-server` | 8888 | Spring Cloud Config Server (native profile for local scaffold) |
+| `config-server` | 8888 | Spring Cloud Config Server (`native` / `jdbc` / `git` via `CONFIG_MODE`) |
 
 **Java:** 21 · **Spring Boot:** 3.4.x · **Spring Cloud:** 2024.0.x · **Spring AI BOM:** managed in parent POM
 
@@ -72,11 +72,12 @@ make backend-api
 # → http://localhost:8080/actuator/health
 ```
 
-Config server (optional for local scaffold):
+Config server (optional for local scaffold; default `CONFIG_MODE=native`):
 
 ```bash
 make backend-config
 # → http://localhost:8888/actuator/health
+# JDBC: CONFIG_MODE=jdbc with DATABASE_URL pointing at a DB that has V9 config_properties
 ```
 
 ## Package layout (`api-server`)

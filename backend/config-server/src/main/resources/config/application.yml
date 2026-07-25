@@ -1,4 +1,4 @@
-# Placeholder native config served by Config Server during local scaffold.
-# Real prompt/guardrail payloads land with Phase 5 (#17).
+# Placeholder native config served by Config Server (CONFIG_MODE=native).
+# JDBC-backed prompt/guardrail payloads land with PromptConfigExporter (#64).
 aiplane:
   scaffold: true

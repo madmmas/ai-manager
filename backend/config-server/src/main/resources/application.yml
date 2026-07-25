@@ -5,17 +5,8 @@ spring:
   application:
     name: aiplane-config-server
   profiles:
-    # native = classpath:/config for local scaffold; switch to git/jdbc later (#17)
-    active: native
-  cloud:
-    config:
-      server:
-        native:
-          search-locations: classpath:/config
-        git:
-          uri: ${CONFIG_GIT_URI:https://github.com/madmmas/aiplane-config}
-          default-label: main
-          search-paths: "{application}"
+    # native | jdbc | git — driven by CONFIG_MODE / SPRING_PROFILES_ACTIVE in Compose
+    active: ${CONFIG_MODE:native}
 
 management:
   endpoints:
