@@ -11,8 +11,10 @@ export interface User {
   email: string;
   name: string;
   status: UserStatus;
-  createdAt: IsoDateTime;
+  createdAt?: IsoDateTime;
   memberships?: ProjectMembership[];
+  /** Flattened roles from memberships — returned by list/invite APIs. */
+  roles?: UserRole[];
 }
 
 /**

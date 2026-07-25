@@ -1,4 +1,6 @@
 import type {
+  APIKey,
+  APIKeyCreated,
   EvaluatorResult,
   Guardrail,
   GuardrailSet,
@@ -16,6 +18,8 @@ import type {
   UsageEventIngestResponse,
   UsageProviderBreakdown,
   UsageSummary,
+  User,
+  UserRole,
 } from "@repo/types";
 
 /** In-memory fixtures used while the Spring API is not yet available. */
@@ -39,6 +43,8 @@ export let MOCK_PROMPT_VERSIONS: PromptVersion[] = [];
 export let MOCK_GUARDRAILS: Guardrail[] = [];
 export let MOCK_GUARDRAIL_SETS: GuardrailSet[] = [];
 export let MOCK_USAGE_EVENTS: UsageEvent[] = [];
+export let MOCK_API_KEYS: APIKey[] = [];
+export let MOCK_USERS: User[] = [];
 
 /** ISO timestamp `days` (and optional hours) before now — always in the past. */
 function daysAgoIso(days: number, hoursAgo = 0): string {
@@ -363,6 +369,8 @@ export function resetPromptMocks(): void {
 resetGuardrailMocks();
 resetPromptMocks();
 resetUsageMocks();
+resetApiKeyMocks();
+resetUserMocks();
 
 export function listMockProjects(): Project[] {
   return MOCK_PROJECTS;
@@ -717,6 +725,134 @@ export function evaluateMockGuardrailSet(
 /** Reset mutable usage event fixtures (call from tests between cases). */
 export function resetUsageMocks(): void {
   MOCK_USAGE_EVENTS = buildInitialUsageEvents();
+}
+
+const ALLOWED_API_KEY_SCOPES = new Set([
+  "prompts:read",
+  "prompts:write",
+  "guardrails:read",
+  "guardrails:evaluate",
+  "usage:read",
+  "usage:write",
+]);
+
+function buildInitialApiKeys(): APIKey[] {
+  return [
+    {
+      id: "akey_mock_01",
+      projectId: "proj_news_radar",
+      name: "news-radar-ingest",
+      prefix: "aimg_abcd1234",
+      scopes: ["usage:write", "usage:read"],
+      createdAt: "2026-03-01T10:00:00.000Z",
+    },
+  ];
+}
+
+function buildInitialUsers(): User[] {
+  return [
+    {
+      id: "user_admin",
+      email: "admin@aiplane.local",
+      name: "AIPlane Admin",
+      status: "active",
+      roles: ["ROLE_ADMIN"],
+      createdAt: "2026-01-01T00:00:00.000Z",
+    },
+  ];
+}
+
+export function resetApiKeyMocks(): void {
+  MOCK_API_KEYS = structuredClone(buildInitialApiKeys());
+}
+
+export function resetUserMocks(): void {
+  MOCK_USERS = structuredClone(buildInitialUsers());
+}
+
+export function listMockApiKeys(projectId: string): APIKey[] {
+  if (!projectId?.trim()) throw new Error("projectId is required");
+  return MOCK_API_KEYS.filter((k) => k.projectId === projectId).map((k) => ({ ...k }));
+}
+
+export function createMockApiKey(input: {
+  projectId: string;
+  name: string;
+  scopes: string[];
+  expiresAt?: string;
+}): APIKeyCreated {
+  if (!input.projectId?.trim()) throw new Error("projectId is required");
+  if (!input.name?.trim()) throw new Error("name is required");
+  if (!MOCK_PROJECTS.some((p) => p.id === input.projectId)) {
+    throw new Error(`Unknown projectId: ${input.projectId}`);
+  }
+  if (!input.scopes?.length) throw new Error("scopes must not be empty");
+  for (const scope of input.scopes) {
+    if (!ALLOWED_API_KEY_SCOPES.has(scope)) {
+      throw new Error(`Unknown scope: ${scope}`);
+    }
+  }
+  if (MOCK_API_KEYS.some((k) => k.projectId === input.projectId && k.name === input.name.trim())) {
+    throw new Error(`API key already exists for name: ${input.name.trim()}`);
+  }
+
+  const secret = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(
+    "",
+  );
+  const rawKey = `aimg_${secret}`;
+  const prefix = rawKey.slice(0, 13);
+  const created: APIKeyCreated = {
+    id: `akey_mock_${Date.now().toString(36)}`,
+    projectId: input.projectId,
+    name: input.name.trim(),
+    prefix,
+    scopes: [...input.scopes],
+    createdAt: new Date().toISOString(),
+    expiresAt: input.expiresAt,
+    key: rawKey,
+  };
+  const { key: _omitKey, ...listed } = created;
+  void _omitKey;
+  MOCK_API_KEYS = [listed, ...MOCK_API_KEYS];
+  return created;
+}
+
+export function revokeMockApiKey(id: string): void {
+  const before = MOCK_API_KEYS.length;
+  MOCK_API_KEYS = MOCK_API_KEYS.filter((k) => k.id !== id);
+  if (MOCK_API_KEYS.length === before) {
+    throw new Error(`API key not found: ${id}`);
+  }
+}
+
+export function listMockUsers(): User[] {
+  return [...MOCK_USERS];
+}
+
+export function inviteMockUser(input: {
+  email: string;
+  name?: string;
+  projectId: string;
+  role: UserRole;
+}): User {
+  const email = input.email.trim().toLowerCase();
+  if (!email) throw new Error("email is required");
+  if (!MOCK_PROJECTS.some((p) => p.id === input.projectId)) {
+    throw new Error(`Unknown projectId: ${input.projectId}`);
+  }
+  if (MOCK_USERS.some((u) => u.email.toLowerCase() === email)) {
+    throw new Error(`User already exists for email: ${email}`);
+  }
+  const user: User = {
+    id: `user_mock_${Date.now().toString(36)}`,
+    email,
+    name: input.name?.trim() || email,
+    status: "invited",
+    roles: [input.role],
+    createdAt: new Date().toISOString(),
+  };
+  MOCK_USERS = [...MOCK_USERS, user];
+  return user;
 }
 
 const ALLOWED_PROVIDERS = new Set<LLMProvider>([
