@@ -1,0 +1,57 @@
+---
+description: Playwright end-to-end testing conventions (UI and API) across the gateway/services migration.
+globs:
+  - tests/e2e/**
+alwaysApply: false
+---
+
+# E2E Testing Rules (Playwright)
+
+## Two suites, two owners — do not blur the line
+- `tests/e2e/ui/**` — browser-driven, Playwright `page` fixture, one spec per MFE's critical
+  journey plus one cross-MFE journey through the dashboard host. This is the only layer that
+  can catch Module Federation runtime issues; do not use it to assert backend state directly.
+- `tests/e2e/api/**` — Playwright `request` context only, no browser. If a spec here does not
+  need a page, do not give it one — the whole point is avoiding browser startup cost.
+- `tests/e2e/fixtures/**` is joint-owned by both suites. Check it does not already have what
+  you need before adding a duplicate.
+
+## Auth and test data
+- Log in once via `fixtures/auth.ts`, reuse `storageState` across specs — do not log in
+  through the UI in every test.
+- Each spec (or `test.describe` block) creates its own project/user via the API and cleans it
+  up afterward. Never assume shared state, and never depend on the specific rows seeded by
+  `R__01_seed_local_dev.sql` — that seed is for manual local dev, not automated isolation.
+- Use `fixtures/ids.ts` for collision-safe naming so parallel workers never collide on a
+  project slug or similar unique field.
+
+## Selectors and assertions
+- Query by role/label/text (`getByRole`, `getByLabel`) the same way `.cursor/rules/frontend-testing.mdc`
+  requires for Vitest — not brittle CSS classes or XPath. `data-testid` only when no accessible
+  query exists.
+- Assert user-visible or API-contract behavior, not internal state. A refactor that does not
+  change behavior should not break the spec.
+- No `waitForTimeout`/hardcoded sleeps. Wait on a real condition — element state, a specific
+  response, a URL change.
+
+## Auth/security-related specs
+- Anything touching login, JWT cookies, or API keys must reflect `.cursor/rules/security.mdc`:
+  httpOnly cookie behavior (never asserting a token is readable from `document.cookie` in JS),
+  API keys shown once and stored hashed, and the ReDoS length/complexity guard on
+  guardrail regex input actually rejecting the pattern, not just timing out.
+- Assert the gateway does not expose `/internal/**` endpoints externally once those exist
+  (Phase 4+, `docs/MICROSERVICES_PLAN.md` §3.2/§3.3) — this is a standing regression test,
+  not a one-time manual check.
+
+## Never
+- Never let a spec or its fixtures call a real LLM provider (Anthropic/OpenAI/Azure) —
+  mock/stub at the provider boundary, same rule as backend unit tests already follow.
+- Never skip, `.only()`, or mark a spec `fixme` to get a run green without flagging it to the
+  other SDET first.
+- Never accept a generated spec as done without actually running it and reviewing the output.
+
+## Tagging and CI
+- Tag every spec `@smoke` (fast, safe for PR-path-triggered CI) or `@regression` (full suite,
+  nightly only) — see `docs/TEST_PLAN.md` §7/§12 for the exact trigger conditions.
+- `retries: 2` on CI, `0` locally; `trace: 'on-first-retry'`. A spec that only passes on retry
+  locally is a bug in the spec, not a CI flakiness problem to paper over.
