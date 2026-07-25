@@ -14,11 +14,11 @@ This document describes how to implement the open-source roadmap for **AIPlane**
 | [#4](https://github.com/madmmas/aiplane/issues/4) | Add product spec and UI mock reference materials | `docs/add-spec-and-mock` | Foundation | Done ([#30](https://github.com/madmmas/aiplane/pull/30)) |
 | [#5](https://github.com/madmmas/aiplane/issues/5) | Rebrand AI Manager → AIPlane | `chore/rebrand-aiplane` | Foundation | Done ([#32](https://github.com/madmmas/aiplane/pull/32)) |
 | [#6](https://github.com/madmmas/aiplane/issues/6) | Add AIPlane brand assets from mock/icons | `feat/dashboard-brand-assets` | Foundation | Done ([#34](https://github.com/madmmas/aiplane/pull/34)) |
-| [#8](https://github.com/madmmas/aiplane/issues/8) | Scaffold `packages/ui` design system | `feat/packages-ui-tokens` | Phase 0 | Open |
-| [#9](https://github.com/madmmas/aiplane/issues/9) | Add shared types and API client packages | `feat/packages-types-api-client` | Phase 0 | Open |
-| [#10](https://github.com/madmmas/aiplane/issues/10) | Dashboard host shell from UI mock | `feat/dashboard-host-shell` | Phase 0 | Open |
-| [#13](https://github.com/madmmas/aiplane/issues/13) | Backend Spring Boot Maven scaffold | `feat/backend-scaffold` | Phase 0 | Open |
-| [#11](https://github.com/madmmas/aiplane/issues/11) | Flyway migrations V1–V9 | `feat/flyway-migrations` | Phase 0 | Open |
+| [#8](https://github.com/madmmas/aiplane/issues/8) | Scaffold `packages/ui` design system | `feat/packages-ui-tokens` | Phase 0 | Done ([#40](https://github.com/madmmas/aiplane/pull/40)) |
+| [#9](https://github.com/madmmas/aiplane/issues/9) | Add shared types and API client packages | `feat/packages-types-api-client` | Phase 0 | Done ([#41](https://github.com/madmmas/aiplane/pull/41)) |
+| [#10](https://github.com/madmmas/aiplane/issues/10) | Dashboard host shell from UI mock | `feat/dashboard-host-shell` | Phase 0 | Done ([#42](https://github.com/madmmas/aiplane/pull/42)) |
+| [#13](https://github.com/madmmas/aiplane/issues/13) | Backend Spring Boot Maven scaffold | `feat/backend-scaffold` | Phase 0 | Done ([#43](https://github.com/madmmas/aiplane/pull/43)) |
+| [#11](https://github.com/madmmas/aiplane/issues/11) | Flyway migrations V1–V9 | `feat/flyway-migrations` | Phase 0 | Done ([#44](https://github.com/madmmas/aiplane/pull/44)) |
 | [#12](https://github.com/madmmas/aiplane/issues/12) | Docker Compose dev environment | `feat/docker-compose-dev` | Phase 0 | Done ([#45](https://github.com/madmmas/aiplane/pull/45)) |
 | [#47](https://github.com/madmmas/aiplane/issues/47) | Frontend Vitest + RTL setup | `chore/frontend-testing-setup` | Hygiene | Done ([#68](https://github.com/madmmas/aiplane/pull/68)) |
 | [#48](https://github.com/madmmas/aiplane/issues/48) | Backend JUnit/Testcontainers/JaCoCo setup | `chore/backend-testing-setup` | Hygiene | Done ([#69](https://github.com/madmmas/aiplane/pull/69)) |
@@ -48,7 +48,7 @@ This document describes how to implement the open-source roadmap for **AIPlane**
 | [#65](https://github.com/madmmas/aiplane/issues/65) | Refresh endpoint proxied via API Server | `feat/phase-5-refresh-endpoint` | Phase 5 | Done ([#95](https://github.com/madmmas/aiplane/pull/95)) |
 | [#66](https://github.com/madmmas/aiplane/issues/66) | News Radar demo consuming Config Server | `feat/phase-5-news-radar-demo` | Phase 5 | Done ([#96](https://github.com/madmmas/aiplane/pull/96)) |
 
-**Phase 1–5 complete** (#50–#53, #54–#56, #57–#59, #60–#62, #63–#66). Next up: Phase 6 Advanced, or Phase 0 leftovers (`packages/ui`, types/api-client checklist drift, Flyway/dashboard foundation items still unchecked in SPEC §10).
+**Phase 0–5 complete** (#8–#13 foundation, #50–#53, #54–#56, #57–#59, #60–#62, #63–#66). Next up: Phase 6 Advanced (PII / LLM-judge guardrails, playground compare, CSV export, CI prompt deploy), or host shell work to wire real cookie auth + live API (dashboard still defaults to `useMocks: true`).
 
 ---
 
@@ -439,9 +439,9 @@ aiplane/
 ## Tips
 
 - **One PR per issue** keeps reviews small and CI fast
-- **Foundation is merged** — #7 (CI/lint), #4–#6 (spec, rebrand, brand assets) are done; start Phase 0 (#8 UI or #13 backend)
+- **Phases 0–5 are merged** — foundation through Config Server; next product work is Phase 6 or shell/auth polish
 - **Do not commit `mock/files 2/`** — duplicate copies; use `mock/icons/` only
-- **Keep dashboard UI work scoped** — shell (#10) is separate from Phase 1 prompt features (#18)
+- **Keep dashboard UI work scoped** — host shell (#10) is separate from domain MFEs (prompt/guardrail/usage/users)
 - Link PRs to issues with `Closes #N` for automatic cleanup
 - Assign yourself on GitHub before starting: `gh issue edit N --add-assignee @me`
 

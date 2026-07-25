@@ -8,7 +8,8 @@ Runnable example: [`examples/news-radar-config/`](../../examples/news-radar-conf
 
 Depends on Phase 5 building blocks: JDBC backend ([#63](https://github.com/madmmas/aiplane/issues/63)),
 `PromptConfigExporter` on promote ([#64](https://github.com/madmmas/aiplane/issues/64)),
-refresh proxy ([#65](https://github.com/madmmas/aiplane/issues/65)). Parent epic: [#17](https://github.com/madmmas/aiplane/issues/17).
+refresh proxy ([#65](https://github.com/madmmas/aiplane/issues/65)). Parent epic
+[#17](https://github.com/madmmas/aiplane/issues/17) is **closed** (via [#93](https://github.com/madmmas/aiplane/pull/93)–[#97](https://github.com/madmmas/aiplane/pull/97)).
 
 ---
 

@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Docs synced to Phases 0–5 reality: SPEC/ISSUE_WORKFLOW Phase 0 Done, cookie auth + config refresh paths, Flyway V10, api-client README no longer documents localStorage JWTs as primary
 - `api-server` now includes `spring-boot-starter-data-jpa` (`ddl-auto=validate`); project and guardrail domains remain on JdbcTemplate for now (#50)
 
 ## [0.1.0] - 2026-07-22
