@@ -28,6 +28,15 @@ reverse-engineer from git history.
 
 ---
 
+## 2026-07-25 — Docs sync after Phases 0–5
+
+Aligned tracker/SPEC/READMEs with shipped code: Phase 0 issues #8–#13 marked Done,
+SPEC §10 Phase 0 checked, auth/config API tables and refresh flow match cookies +
+`/actuator/refresh` proxy, Flyway path includes V10, and `@repo/api-client` README no
+longer documents localStorage JWTs as the primary pattern. Epic #17 closed via #97.
+
+---
+
 ## 2026-07-24 — News Radar Config Server consumption demo (#66)
 
 Docs + minimal Go example only — no new Spring services. Wrote
@@ -36,7 +45,7 @@ Docs + minimal Go example only — no new Spring services. Wrote
 optional `POST /api/v1/config/refresh/{application}`. Runnable sample under
 `examples/news-radar-config/` (`go.mod` + stdlib `main.go` + `demo.sh`) so
 adopters can `go run .` without a Config SDK. Phase 5 checklist items #63–#66
-are done; epic #17 stays open until the stacked PRs merge and the epic is closed.
+are done; epic #17 was closed via docs PR #97 after the stacked feature PRs merged.
 
 ---
 

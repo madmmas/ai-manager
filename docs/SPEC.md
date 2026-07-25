@@ -68,15 +68,19 @@ aiplane/
 │   │       ├── usage/             # Usage telemetry module
 │   │       ├── provider/          # LLM provider abstraction (Spring AI)
 │   │       ├── security/          # JWT + API key filter
-│   │       └── common/            # Shared: exceptions, DTOs, config
-│   └── db/
-│       └── migration/             # Flyway SQL migrations
+│   │       ├── config/            # Config Server HTTP proxy
+│   │       └── common/            # Shared: exceptions, DTOs, util
+│   └── db/                        # Pointer README only
+│       └── (migrations live on api-server classpath — see below)
 ├── docker-compose.yml
 ├── docker-compose.dev.yml
 ├── .env.example
 ├── Makefile
-└── SPEC.md
+└── docs/
+    └── SPEC.md
 ```
+
+Flyway SQL: `backend/api-server/src/main/resources/db/migration/` (V1–V10).
 
 ### System Topology
 
@@ -172,7 +176,9 @@ spring:
           default-label: main
           search-paths: '{application}'
         jdbc:
-          sql: SELECT KEY, VALUE FROM CONFIG_PROPERTIES WHERE APPLICATION=? AND PROFILE=? AND LABEL=?
+          # V9 quotes "KEY"; value is lowercase. Mapped by column position.
+          sql: SELECT "KEY", value FROM config_properties WHERE application=? AND profile=? AND label=?
+          default-label: main
           order: 1
   datasource:
     url: ${DATABASE_URL}
@@ -413,7 +419,8 @@ Two parallel auth mechanisms:
 **2. API Key (for programmatic clients)**
 - Keys stored as SHA-256 hash in DB, prefix `aimg_` for scanner detection
 - `ApiKeyAuthenticationFilter` runs before JWT filter
-- Scopes checked per endpoint: `prompts:read`, `guardrails:evaluate`, etc.
+- Scopes checked per endpoint: `prompts:read|write`, `guardrails:read|evaluate`,
+  `usage:read|write`, `config:read|refresh` (see `ApiKeyScope`)
 
 ```java
 @Configuration
@@ -439,7 +446,7 @@ public class SecurityConfig {
 #### Database Migrations (Flyway)
 
 ```
-db/migration/
+api-server/.../db/migration/
 ├── V1__create_projects.sql
 ├── V2__create_prompts.sql
 ├── V3__create_prompt_versions.sql
@@ -448,7 +455,8 @@ db/migration/
 ├── V6__create_users.sql
 ├── V7__create_api_keys.sql
 ├── V8__create_usage_events.sql
-└── V9__create_config_properties.sql   ← if using JDBC backend for Config Server
+├── V9__create_config_properties.sql
+└── V10__guardrail_sets_short_circuit.sql
 ```
 
 #### REST API Reference
@@ -464,9 +472,9 @@ GET    /auth/me                       → { id, email, name, roles }
 
 **Projects**
 ```
-GET    /api/v1/projects
-POST   /api/v1/projects
-GET    /api/v1/projects/:id
+# Not yet exposed as REST — projects are seeded (Flyway) and listed via
+# @repo/api-client mocks until a ProjectController lands.
+# Internal: ProjectRepository (JDBC) used by invite, exporter, etc.
 ```
 
 **Prompts**
@@ -479,9 +487,10 @@ DELETE /api/v1/prompts/:id
 GET    /api/v1/prompts/:id/versions
 POST   /api/v1/prompts/:id/versions
 GET    /api/v1/prompts/:id/versions/:vid
-PATCH  /api/v1/prompts/:id/versions/:vid/status   { status: "active" }
+PATCH  /api/v1/prompts/:id/versions/:vid/status   { status }
+POST   /api/v1/prompts/:id/versions/:vid/promote
 POST   /api/v1/prompts/:id/playground/run
-POST   /api/v1/prompts/:id/playground/compare     { versionIds: [a, b], variables: {} }
+# playground/compare → Phase 6
 ```
 
 **Guardrails**
@@ -501,10 +510,10 @@ POST   /api/v1/guardrail-sets/:id/evaluate        { input: "...", output: "..." 
 ```
 GET    /api/v1/users
 POST   /api/v1/users/invite
-PATCH  /api/v1/users/:id
 GET    /api/v1/api-keys?projectId=
 POST   /api/v1/api-keys                           → returns full key once
 DELETE /api/v1/api-keys/:id
+# PATCH /api/v1/users/:id → not shipped yet
 ```
 
 **Usage**
@@ -533,19 +542,22 @@ This is how **client applications consume AIPlane at runtime** without a full SD
 ### How a Client App Fetches Config
 
 ```bash
-# News Radar (Go) on startup:
-GET http://aiplane-config:8888/news-radar/production
+# News Radar (Go) on startup (profile matches exporter: default / label main):
+GET http://localhost:8888/news-radar/default
 
-# Response (Spring Cloud Config format):
+# Response (Spring Cloud Config format) — keys from JdbcPromptConfigExporter:
 {
   "name": "news-radar",
-  "profiles": ["production"],
+  "profiles": ["default"],
   "propertySources": [{
-    "name": "aiplane/news-radar/production",
+    "name": "…",
     "source": {
-      "aiplane.prompts.dedup-judge.active-version": "7",
-      "aiplane.prompts.dedup-judge.model": "claude-haiku-4-5",
-      "aiplane.guardrails.active-set": "news-radar-production"
+      "aiplane.prompts.news-radar.dedup-judge.system": "…",
+      "aiplane.prompts.news-radar.dedup-judge.user": "…",
+      "aiplane.prompts.news-radar.dedup-judge.model": "claude-sonnet-4-20250514",
+      "aiplane.prompts.news-radar.dedup-judge.provider": "anthropic",
+      "aiplane.prompts.news-radar.dedup-judge.version": "6",
+      "aiplane.prompts.news-radar.dedup-judge.versionId": "ver_6"
     }
   }]
 }
@@ -554,18 +566,19 @@ GET http://aiplane-config:8888/news-radar/production
 ### Config Refresh Flow (when a prompt is promoted)
 
 ```
-User promotes version 7 → active in AIPlane UI
+User promotes version → Active in AIPlane UI (or API)
         ↓
-PromptService.promoteVersion() runs
+PromptService applies ACTIVE + JdbcPromptConfigExporter upserts config_properties
+(keys: aiplane.prompts.{name}.{system,user,model,provider,version,versionId};
+ application = project slug, profile = default, label = main)
         ↓
-PromptConfigExporter.export(projectSlug) writes new config to backend
-(Git commit or DB upsert depending on Config Server mode)
+Optional: POST /api/v1/config/refresh/{application}
+  → API Server proxies POST {CONFIG_SERVER_URL}/actuator/refresh
+  (no Spring Cloud Bus /monitor in v1)
         ↓
-POST /monitor on Config Server (Spring Cloud Bus, or direct HTTP)
+Clients re-fetch GET {config-server}/{projectSlug}/default
         ↓
-Config Server notifies registered clients via /actuator/refresh
-        ↓
-News Radar reloads prompt config — no redeploy needed
+News Radar (or any HTTP client) reloads prompt config — no redeploy needed
 ```
 
 ### JDBC Backend Config (simplest for self-hosting)
@@ -590,6 +603,13 @@ CREATE TABLE config_properties (
 
 ## 5. Frontend — Micro-Frontend Apps
 
+> **Shipped MVP shape (Phases 0–5):** Host mounts remotes via Module Federation + in-shell
+> navigation (not full react-router trees). Domain MFEs are single-page compositions
+> (library/timeline/editor/playground, guardrail builder, usage KPIs, user/API-key panels)
+> using `@repo/ui` primitives (Badge/Button/Card/Input). Routes and Monaco/Cmd+K below
+> remain the target product vision; treat unchecked host settings / multi-page paths as
+> aspirational unless noted as shipped.
+
 ### 5.1 Dashboard (Host Shell) — Port 5173
 
 **Responsibility:** Layout, auth, global navigation, project switching, remote error boundaries.
@@ -604,13 +624,15 @@ CREATE TABLE config_properties (
 /settings         → host-owned settings (provider API keys, project config)
 ```
 
-**Global State (Zustand)**
+**Session / client state**
 ```typescript
-interface AppStore {
-  currentProject: Project;
-  currentUser:    AuthUser;
-  projects:       Project[];
-  accessToken:    string;
+// Auth: httpOnly cookies (aiplane_access / aiplane_refresh) — not localStorage.
+// Shell should call APIs with credentials: 'include' (or rely on same-site cookies).
+// Optional getAccessToken Bearer helpers remain for API-key / transitional clients only.
+
+interface ShellSession {
+  currentProject: Project;   // today: mocked list + localStorage project id
+  currentUser:    AuthUser;  // from GET /auth/me once host leaves useMocks
   theme:          'dark' | 'light';
 }
 ```
@@ -723,6 +745,9 @@ prompts:write        create / edit / promote versions
 guardrails:read      view guardrails
 guardrails:evaluate  call the runtime evaluate endpoint
 usage:read           view usage telemetry
+usage:write          ingest usage events
+config:read          GET /api/v1/config/{application}/{profile}
+config:refresh       POST /api/v1/config/refresh/{application}
 ```
 
 ---
@@ -898,7 +923,7 @@ services:
       DATABASE_URL: jdbc:postgresql://postgres:5432/aimanager
       DB_USERNAME:  aimanager
       DB_PASSWORD:  ${DB_PASSWORD}
-      CONFIG_MODE:  jdbc           # or 'git' or 'native'
+      CONFIG_MODE:  ${CONFIG_MODE:-native}   # jdbc | git | native (default native for local scaffold)
     depends_on:
       postgres: { condition: service_healthy }
 
@@ -943,8 +968,8 @@ DB_PASSWORD=changeme
 JWT_SECRET=change-me-min-32-chars
 SECRET_KEY=change-me-for-encrypting-provider-keys
 
-# Config Server mode: jdbc | git | native
-CONFIG_MODE=jdbc
+# Config Server mode: jdbc | git | native (repo default: native)
+CONFIG_MODE=native
 
 # Git mode only
 CONFIG_GIT_URI=https://github.com/your-org/aiplane-config
@@ -997,15 +1022,18 @@ AZURE_OPENAI_KEY=
 
 ## 10. Roadmap
 
-### Phase 0 — Foundation ✅ (scaffolding exists)
+### Phase 0 — Foundation ✅
+
+Complete via [#8](https://github.com/madmmas/aiplane/issues/8)–[#13](https://github.com/madmmas/aiplane/issues/13).
+
 - [x] pnpm + Turborepo monorepo
 - [x] Vite Module Federation skeleton (5 apps)
-- [ ] `packages/ui` with design tokens
-- [ ] `packages/types` + `packages/api-client`
-- [ ] Maven parent POM + two modules (config-server, api-server)
-- [ ] Flyway migrations (V1–V9)
-- [ ] Docker Compose full stack
-- [ ] Dashboard shell: sidebar, project switcher, auth flow
+- [x] `packages/ui` with design tokens
+- [x] `packages/types` + `packages/api-client`
+- [x] Maven parent POM + two modules (config-server, api-server)
+- [x] Flyway migrations (V1–V9; V10 added with guardrail sets)
+- [x] Docker Compose full stack
+- [x] Dashboard shell: sidebar, project switcher, theme (auth cookies landed in Phase 4; host still defaults to mocks)
 
 ### Phase 1 — Prompt Manager MVP
 
@@ -1068,16 +1096,16 @@ Complete via epic [#17](https://github.com/madmmas/aiplane/issues/17) (sub-issue
 | # | Question | Default | Confirm |
 |---|---|---|---|
 | 1 | Config Server backend: JDBC (shared DB) or Git for v1? | JDBC — simpler, no extra repo | ✅ |
-| 2 | Spring Cloud Bus for refresh propagation or simple direct HTTP? | Direct HTTP (less ops overhead) | ? |
-| 3 | Auth for v1: local JWT only or add OAuth2 (GitHub / Google)? | Local JWT — OAuth2 as Phase 6 | ? |
+| 2 | Spring Cloud Bus for refresh propagation or simple direct HTTP? | Direct HTTP (less ops overhead) | ✅ (#65 — api-server proxies `POST /actuator/refresh`) |
+| 3 | Auth for v1: local JWT only or add OAuth2 (GitHub / Google)? | Local JWT — OAuth2 as Phase 6 | ✅ (httpOnly cookies; #60) |
 | 4 | Maven or Gradle for backend? | **Maven** | ✅ |
 | 5 | Monolith or modular monolith? | **Modular monolith** | ✅ |
-| 6 | Dark mode only or toggle? | Dark default, light available | ? |
+| 6 | Dark mode only or toggle? | Dark default, light available | ✅ (dashboard theme switcher) |
 | 7 | Spring AI version: lock to stable GA or track milestones? | Stable GA | ? |
 
 ---
 
-*Cursor: start with Phase 0. Build `packages/ui` tokens and `backend/` Maven structure first — everything else depends on these two foundations.*
+*Cursor: Phases 0–5 are shipped. Prefer Phase 6 items or host-shell polish (live API + cookie credentials) over redoing foundation work.*
 
 ---
 
@@ -1089,7 +1117,7 @@ Every MFE (`dashboard`, `prompt-manager`, `guardrail`, `user-manager`, `usages-d
 
 | Layer | Library | Version |
 |---|---|---|
-| Framework | React 18 | 18.x |
+| Framework | React 19 | 19.x |
 | Language | TypeScript | 5.x |
 | Styling | Tailwind CSS | 3.x |
 | Components | shadcn/ui | latest |

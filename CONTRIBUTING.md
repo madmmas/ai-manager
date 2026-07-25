@@ -6,6 +6,8 @@ Thank you for your interest in contributing to AIPlane! This document outlines h
 
 - **Node.js** ≥ 18 (see [`.nvmrc`](.nvmrc) for the recommended version)
 - **pnpm** 9.x
+- **JDK 21** + **Maven 3.9+** for backend work (`backend/`; see [`backend/README.md`](backend/README.md))
+- **Docker** for Compose / Testcontainers integration tests
 
 ## Getting started
 

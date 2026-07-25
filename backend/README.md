@@ -24,7 +24,7 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 21 2>/dev/null || echo /opt/homebre
 
 Migrations live on the API server classpath:
 
-`api-server/src/main/resources/db/migration/` — V1–V9 (projects → config_properties)
+`api-server/src/main/resources/db/migration/` — V1–V10 (projects → config_properties + guardrail-set short-circuit)
 
 Optional local seed (`classpath:db/seed`): demo projects + `admin@aiplane.local` / `changeme`.
 
@@ -99,5 +99,14 @@ guardrail-set CRUD + ordered evaluate live under `/api/v1/guardrails` and
 `/api/v1/guardrail-sets` (Flyway V4/V5 + V10 `short_circuit_on_block`), still on JdbcTemplate.
 `api-server` depends on `spring-ai-client-chat` plus `spring-ai-openai` / `spring-ai-anthropic`.
 
-**Persistence:** hybrid — JPA for prompts; JdbcTemplate for project + guardrail until those
-packages are migrated.
+**`usage/` (Phase 3):** batched ingest `POST /api/v1/usage/events`, cost rates
+(`CostRateRegistry` / `aiplane.cost-rates`), summary / events / projection reads.
+
+**`user/` + `security/` (Phase 4):** invite + JWT httpOnly cookies (`/auth/*`, `GET /api/v1/users`),
+API key CRUD (`/api/v1/api-keys`), `ApiKeyAuthenticationFilter` (before JWT) with scopes.
+
+**`config/` (Phase 5):** `ConfigProxyController` proxies Config Server environment +
+`/actuator/refresh`. `JdbcPromptConfigExporter` upserts `config_properties` on version activate.
+
+**Persistence:** hybrid — JPA for prompts, users, API keys, usage events; JdbcTemplate for
+project + guardrail (+ config export SQL) until those packages are migrated.

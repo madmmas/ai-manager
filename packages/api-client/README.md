@@ -26,9 +26,10 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <ApiClientProvider
         config={{
           baseUrl: import.meta.env.VITE_API_URL ?? "http://localhost:8080",
-          getAccessToken: () => localStorage.getItem("aiplane-access-token"),
-          // Default true until the Spring API is up — set false to hit the network.
-          useMocks: true,
+          // UI auth uses httpOnly cookies (aiplane_access / aiplane_refresh).
+          // Prefer same-origin or CORS credentials once the host leaves mock mode.
+          // Optional: getAccessToken for Bearer tokens (e.g. transitional clients).
+          useMocks: true, // set false to hit the live Spring API
         }}
       >
         {children}
@@ -45,6 +46,9 @@ const { data: projects, isLoading } = useProjects();
 const { data: prompts } = usePrompts({ projectId: projects?.[0]?.id });
 ```
 
+Domain hooks cover prompts, versions, playground, guardrails, usage, users, and API keys.
+`useProjects` still uses fixtures until a projects REST API exists.
+
 ## Low-level client
 
 ```ts
@@ -52,8 +56,9 @@ import { createApiClient } from "@repo/api-client";
 
 const api = createApiClient({
   baseUrl: "http://localhost:8080",
-  getAccessToken: () => token,
   useMocks: false,
+  // Optional Bearer helper (API keys / tooling). UI sessions use cookies instead.
+  // getAccessToken: () => null,
 });
 
 const prompts = await api.apiFetch("/api/v1/prompts", {
@@ -61,5 +66,12 @@ const prompts = await api.apiFetch("/api/v1/prompts", {
 });
 ```
 
-Auth: when `getAccessToken` returns a value, every request (unless `skipAuth: true`)
-gets `Authorization: Bearer <token>`.
+**Auth**
+
+- **Browser UI (Phase 4):** JWTs are httpOnly cookies — do not put access tokens in
+  `localStorage` / `sessionStorage`. Cookie auth requires CORS `allowCredentials` and
+  fetch credentials when calling a cross-origin API.
+- **Optional Bearer:** when `getAccessToken` returns a value, requests (unless
+  `skipAuth: true`) get `Authorization: Bearer <token>` (useful for API keys /
+  non-browser clients).
+- **Programmatic clients:** prefer `X-API-Key: aimg_…` (or Bearer `aimg_…`) with scopes.
