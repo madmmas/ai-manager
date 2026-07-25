@@ -39,8 +39,8 @@ class ApiKeyScopeTests {
   void validateAndNormalizeAcceptsKnownScopesAndDedupes() {
     assertThat(
             ApiKeyScope.validateAndNormalize(
-                List.of("usage:write", "USAGE:READ", "usage:write", "prompts:read")))
-        .containsExactly("usage:write", "usage:read", "prompts:read");
+                List.of("usage:write", "USAGE:READ", "usage:write", "prompts:read", "config:refresh")))
+        .containsExactly("usage:write", "usage:read", "prompts:read", "config:refresh");
   }
 
   @Test

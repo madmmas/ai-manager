@@ -28,6 +28,28 @@ reverse-engineer from git history.
 
 ---
 
+## 2026-07-24 — Config refresh proxy via API Server (#65)
+
+Added `ConfigProxyController` + `ConfigServerClient` (RestClient) under
+`dev.madmmas.aimanager.config`, pointed at `aiplane.config-server.base-url`
+(`CONFIG_SERVER_URL`, default `http://localhost:8888`).
+
+**Endpoints:** `POST /api/v1/config/refresh/{application}` → Config Server
+`POST /actuator/refresh` (returns refreshed key list); convenience
+`GET /api/v1/config/{application}/{profile}` → Config Server environment JSON.
+The `{application}` path on refresh is API symmetry / future targeting — Actuator
+refresh itself is server-wide (no Spring Cloud Bus in this PR).
+
+**Auth:** scopes `config:refresh` / `config:read` on API keys, or JWT ADMIN/DEVELOPER
+(same pattern as usage). Unreachable / failed upstream → **502** via
+`ConfigServerUnreachableException`.
+
+**Config Server:** already exposed `refresh` in management endpoints; explicitly set
+`management.endpoint.refresh.enabled=true`. Stuck to `/actuator/refresh` per issue
+(not `/actuator/busrefresh`). News Radar demo (#66) stays out of this PR.
+
+---
+
 ## 2026-07-24 — PromptConfigExporter writes config_properties on promote (#64)
 
 Replaced `NoOpPromptConfigExporter` with always-on `JdbcPromptConfigExporter`. The #51

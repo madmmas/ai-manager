@@ -287,6 +287,12 @@ src/main/java/dev/madmmas/aimanager/
 │   │   └── UsageEvent.java
 │   └── dto/  ...
 │
+├── config/
+│   ├── ConfigProxyController.java    ← proxies Config Server refresh + environment
+│   ├── ConfigServerClient.java       ← RestClient to CONFIG_SERVER_URL
+│   ├── ConfigServerProperties.java
+│   └── ConfigConfiguration.java
+│
 ├── provider/
 │   ├── LLMProviderFactory.java       ← selects ChatModel by provider
 │   ├── ProviderConfig.java           ← @ConfigurationProperties
@@ -508,8 +514,11 @@ GET    /api/v1/usage/costs/projection?projectId=
 **Config Server passthrough (convenience)**
 ```
 GET    /api/v1/config/:application/:profile       ← proxies Config Server response
-POST   /api/v1/config/refresh/:application        ← triggers Config Server refresh
+POST   /api/v1/config/refresh/:application        ← triggers Config Server /actuator/refresh
 ```
+
+Auth: API key scopes `config:read` / `config:refresh`, or JWT `ADMIN` / `DEVELOPER`. If Config
+Server is unreachable or returns an error, the API Server responds with **502 Bad Gateway**.
 
 ---
 
@@ -1033,7 +1042,7 @@ Complete via epic [#16](https://github.com/madmmas/aiplane/issues/16) (sub-issue
 ### Phase 5 — Config Server Integration
 - [x] JDBC backend for Config Server (#63)
 - [x] `PromptConfigExporter` writing on version promotion (#64)
-- [ ] Refresh endpoint proxied via API Server (#65)
+- [x] Refresh endpoint proxied via API Server (#65)
 - [ ] News Radar integration demo (Go client consuming Config Server) (#66)
 
 ### Phase 6 — Advanced

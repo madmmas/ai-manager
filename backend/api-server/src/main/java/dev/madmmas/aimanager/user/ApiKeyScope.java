@@ -14,7 +14,9 @@ public enum ApiKeyScope {
   GUARDRAILS_READ("guardrails:read"),
   GUARDRAILS_EVALUATE("guardrails:evaluate"),
   USAGE_READ("usage:read"),
-  USAGE_WRITE("usage:write");
+  USAGE_WRITE("usage:write"),
+  CONFIG_READ("config:read"),
+  CONFIG_REFRESH("config:refresh");
 
   private final String wireValue;
 
