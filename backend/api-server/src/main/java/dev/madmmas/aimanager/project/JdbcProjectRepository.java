@@ -1,6 +1,8 @@
 package dev.madmmas.aimanager.project;
 
 import java.util.List;
+import java.util.Optional;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -23,6 +25,18 @@ public class JdbcProjectRepository implements ProjectRepository {
   @Override
   public List<String> findAllSlugs() {
     return jdbcTemplate.queryForList("SELECT slug FROM projects ORDER BY slug", String.class);
+  }
+
+  @Override
+  public Optional<String> findSlugById(String id) {
+    try {
+      String slug =
+          jdbcTemplate.queryForObject(
+              "SELECT slug FROM projects WHERE id = ?", String.class, id);
+      return Optional.ofNullable(slug);
+    } catch (EmptyResultDataAccessException ex) {
+      return Optional.empty();
+    }
   }
 
   @Override

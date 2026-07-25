@@ -28,6 +28,35 @@ reverse-engineer from git history.
 
 ---
 
+## 2026-07-24 — PromptConfigExporter writes config_properties on promote (#64)
+
+Replaced `NoOpPromptConfigExporter` with always-on `JdbcPromptConfigExporter`. The #51
+promotion hook already called `onVersionActivated`; this PR makes that write real rows
+into the shared Postgres `config_properties` table (same store Config Server JDBC reads
+in #63).
+
+**Key schema** (application = project slug via `ProjectRepository.findSlugById`, fallback
+to project id; profile = `default`; label = `main`):
+
+| Key | Value |
+|---|---|
+| `aiplane.prompts.{name}.system` | systemPrompt |
+| `aiplane.prompts.{name}.user` | userPromptTemplate |
+| `aiplane.prompts.{name}.model` | model |
+| `aiplane.prompts.{name}.provider` | provider wire value |
+| `aiplane.prompts.{name}.version` | version number |
+| `aiplane.prompts.{name}.versionId` | version id |
+
+Prompt names sanitize `/` → `.` (e.g. `news-radar/dedup` → `news-radar.dedup`). Upserts
+use Postgres `ON CONFLICT (application, profile, label, "KEY") DO UPDATE` so re-promoting
+or activating a newer version updates values without duplicating rows.
+
+Skipped optional `@Profile` / `@ConditionalOnProperty` dual-bean setup — api-server always
+has a datasource and V9, so one JDBC bean is enough. Refresh proxy (#65) and News Radar
+demo (#66) stay out of this PR.
+
+---
+
 ## 2026-07-24 — Config Server JDBC backend (#63)
 
 Enabled `CONFIG_MODE=jdbc` (Spring profile `jdbc`) with `spring-boot-starter-jdbc` +
@@ -175,8 +204,8 @@ Unit tests mock the runner/factory — no live API calls in CI.
 Promotion is a strict path (`draft → testing → active → archived`) on
 `PromptVersionStatus.canTransitionTo` — no skipping Testing. Activating a version
 archives any other active row for that prompt, sets `prompts.active_version_id`,
-and calls `PromptConfigExporter.onVersionActivated`. The default bean
-(`NoOpPromptConfigExporter`) only logs; Phase 5 owns the Config Server write.
+and calls `PromptConfigExporter.onVersionActivated`. Phase 5 (#64) replaced the NoOp stub
+with `JdbcPromptConfigExporter` writing to `config_properties`.
 
 Primary API is SPEC's `PATCH .../versions/{vid}/status`; `POST .../promote`
 advances one step for convenience. Both share the same transition service path.

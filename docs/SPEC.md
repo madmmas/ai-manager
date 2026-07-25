@@ -1002,8 +1002,8 @@ Complete via epic [#18](https://github.com/madmmas/aiplane/issues/18) (sub-issue
 - [x] Version history + promotion flow
 - [x] Playground (Spring AI — Anthropic + OpenAI)
 - [x] Version timeline component (+ library, editor, playground UI in Prompt Manager MFE)
-- [ ] Config Server export on version promotion
-  _(interface hooked on Active in #51; real write is Phase 5)_
+- [x] Config Server export on version promotion
+  _(interface hooked on Active in #51; JDBC write shipped in #64)_
 
 ### Phase 2 — Guardrail MVP
 
@@ -1032,7 +1032,7 @@ Complete via epic [#16](https://github.com/madmmas/aiplane/issues/16) (sub-issue
 
 ### Phase 5 — Config Server Integration
 - [x] JDBC backend for Config Server (#63)
-- [ ] `PromptConfigExporter` writing on version promotion (#64)
+- [x] `PromptConfigExporter` writing on version promotion (#64)
 - [ ] Refresh endpoint proxied via API Server (#65)
 - [ ] News Radar integration demo (Go client consuming Config Server) (#66)
 
