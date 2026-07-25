@@ -1044,6 +1044,9 @@ Complete via epic [#16](https://github.com/madmmas/aiplane/issues/16) (sub-issue
 - [x] User + API key management UI (#62)
 
 ### Phase 5 — Config Server Integration
+
+Complete via epic [#17](https://github.com/madmmas/aiplane/issues/17) (sub-issues [#63](https://github.com/madmmas/aiplane/issues/63)–[#66](https://github.com/madmmas/aiplane/issues/66)).
+
 - [x] JDBC backend for Config Server (#63)
 - [x] `PromptConfigExporter` writing on version promotion (#64)
 - [x] Refresh endpoint proxied via API Server (#65)
