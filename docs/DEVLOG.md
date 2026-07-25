@@ -28,6 +28,30 @@ reverse-engineer from git history.
 
 ---
 
+## 2026-07-24 — API keys hashed + filter before JWT (#61)
+
+Flyway V7 `api_keys` already fit (TEXT[] scopes, `key_hash`, `prefix`, `expires_at`) —
+no new migration. Keys are `aimg_` + 32-byte hex; we store SHA-256 hex of the full
+secret and a 13-char visible prefix (`aimg_` + 8 hex). The raw key is returned only
+on `POST /api/v1/api-keys` and never logged.
+
+**Filter order:** `ApiKeyAuthenticationFilter` → `JwtAuthenticationFilter` →
+`UsernamePasswordAuthenticationFilter`. Extraction prefers `X-API-Key: aimg_…`, and
+also accepts `Authorization: Bearer aimg_…` so future JWT Bearer tokens won't collide.
+Invalid/expired keys leave the SecurityContext empty (fall through to JWT or 401).
+On success, authorities are raw scope strings (`usage:write`, …); `last_used_at` is
+updated synchronously.
+
+**Scope enforcement (MVP):** `@EnableMethodSecurity` + `@PreAuthorize` on usage
+ingest/read — API keys need `usage:write` / `usage:read`; JWT users keep
+`ROLE_ADMIN`/`ROLE_DEVELOPER` (and `ROLE_VIEWER` for reads) so existing
+`@WithMockUser(roles="ADMIN")` ITs stay green. API key CRUD itself requires
+`ROLE_ADMIN` (JWT cookie), not another API key.
+
+User-manager UI remains #62; this PR adds api-client hooks/mocks only.
+
+---
+
 ## 2026-07-24 — Invite flow + JWT httpOnly cookies (#60)
 
 Phase 4 auth lands with invite → accept-invite → login/refresh/logout. Tokens are

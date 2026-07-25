@@ -1023,8 +1023,8 @@ Complete via epic [#15](https://github.com/madmmas/aiplane/issues/15) (sub-issue
 
 ### Phase 4 — User Management + API Keys
 - [x] Invite flow + JWT auth (#60)
-- [ ] API key CRUD + permission scopes (#61)
-- [ ] `ApiKeyAuthenticationFilter` (#61)
+- [x] API key CRUD + permission scopes (#61)
+- [x] `ApiKeyAuthenticationFilter` (#61)
 - [ ] User + API key management UI (#62)
 
 ### Phase 5 — Config Server Integration
