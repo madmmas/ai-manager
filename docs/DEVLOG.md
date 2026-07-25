@@ -28,6 +28,18 @@ reverse-engineer from git history.
 
 ---
 
+## 2026-07-24 — News Radar Config Server consumption demo (#66)
+
+Docs + minimal Go example only — no new Spring services. Wrote
+`docs/integrations/news-radar-config-server.md` covering promote →
+`config_properties` → Config Server JDBC → client HTTP GET, with curl and
+optional `POST /api/v1/config/refresh/{application}`. Runnable sample under
+`examples/news-radar-config/` (`go.mod` + stdlib `main.go` + `demo.sh`) so
+adopters can `go run .` without a Config SDK. Phase 5 checklist items #63–#66
+are done; epic #17 stays open until the stacked PRs merge and the epic is closed.
+
+---
+
 ## 2026-07-24 — Config refresh proxy via API Server (#65)
 
 Added `ConfigProxyController` + `ConfigServerClient` (RestClient) under

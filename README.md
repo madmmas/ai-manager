@@ -8,7 +8,10 @@ A **micro-frontend** monorepo for AI management tooling. The project uses a host
 For product intent, architecture, and roadmap, see [`docs/SPEC.md`](docs/SPEC.md).  
 For the issue → branch → PR workflow, see [`docs/ISSUE_WORKFLOW.md`](docs/ISSUE_WORKFLOW.md).  
 User-facing changes are tracked in [`CHANGELOG.md`](CHANGELOG.md).  
-For engineering decisions and trade-offs, see [`docs/DEVLOG.md`](docs/DEVLOG.md).
+For engineering decisions and trade-offs, see [`docs/DEVLOG.md`](docs/DEVLOG.md).  
+Client apps consuming Config Server (News Radar–style Go HTTP): see
+[`docs/integrations/news-radar-config-server.md`](docs/integrations/news-radar-config-server.md)
+and [`examples/news-radar-config/`](examples/news-radar-config/).
 
 Static UI reference mockups live under [`mock/`](mock/) (including brand icons in `mock/icons/`). These files are **reference-only** — not part of the runtime app — and are excluded from Biome lint.
 
@@ -191,7 +194,10 @@ aiplane/
 ├── docs/
 │   ├── SPEC.md           # Product spec and architecture
 │   ├── ISSUE_WORKFLOW.md # Issue / branch / PR workflow
-│   └── DEVLOG.md         # Engineering decisions and trade-offs
+│   ├── DEVLOG.md         # Engineering decisions and trade-offs
+│   └── integrations/     # Reference client integrations (Config Server, …)
+├── examples/
+│   └── news-radar-config/ # Minimal Go HTTP client for Config Server
 ├── mock/                 # UI mock + brand icons (reference only)
 ├── package.json
 ├── pnpm-workspace.yaml

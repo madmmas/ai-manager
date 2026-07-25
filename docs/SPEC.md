@@ -208,6 +208,10 @@ aiplane:
 
 Client apps (News Radar, Ackloop) call this endpoint on startup and on `POST /actuator/refresh` (triggered by AIPlane after a version promotion). No SDK needed — pure HTTP.
 
+**Reference integration:** promote → JDBC → Go HTTP GET is documented in
+[`docs/integrations/news-radar-config-server.md`](integrations/news-radar-config-server.md)
+with a runnable sample in [`examples/news-radar-config/`](../examples/news-radar-config/) (#66).
+
 ### 3.3 API Server Module (`api-server/`)
 
 **Port:** 8080  
@@ -1043,7 +1047,9 @@ Complete via epic [#16](https://github.com/madmmas/aiplane/issues/16) (sub-issue
 - [x] JDBC backend for Config Server (#63)
 - [x] `PromptConfigExporter` writing on version promotion (#64)
 - [x] Refresh endpoint proxied via API Server (#65)
-- [ ] News Radar integration demo (Go client consuming Config Server) (#66)
+- [x] News Radar integration demo (Go client consuming Config Server) (#66)
+  — see [`docs/integrations/news-radar-config-server.md`](integrations/news-radar-config-server.md)
+  and [`examples/news-radar-config/`](../examples/news-radar-config/)
 
 ### Phase 6 — Advanced
 - [ ] PII detection guardrail
