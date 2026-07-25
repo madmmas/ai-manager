@@ -46,7 +46,7 @@ This document describes how to implement the open-source roadmap for **AIPlane**
 | [#63](https://github.com/madmmas/aiplane/issues/63) | JDBC backend for Config Server | `feat/phase-5-config-server-jdbc` | Phase 5 | Done ([#93](https://github.com/madmmas/aiplane/pull/93)) |
 | [#64](https://github.com/madmmas/aiplane/issues/64) | PromptConfigExporter on version promotion | `feat/phase-5-prompt-config-exporter` | Phase 5 | Done ([#94](https://github.com/madmmas/aiplane/pull/94)) |
 | [#65](https://github.com/madmmas/aiplane/issues/65) | Refresh endpoint proxied via API Server | `feat/phase-5-refresh-endpoint` | Phase 5 | Done ([#95](https://github.com/madmmas/aiplane/pull/95)) |
-| [#66](https://github.com/madmmas/aiplane/issues/66) | News Radar demo consuming Config Server | `feat/phase-5-news-radar-demo` | Phase 5 | Done |
+| [#66](https://github.com/madmmas/aiplane/issues/66) | News Radar demo consuming Config Server | `feat/phase-5-news-radar-demo` | Phase 5 | Done ([#96](https://github.com/madmmas/aiplane/pull/96)) |
 
 **Phase 1–4 complete** (#50–#53, #54–#56, #57–#59, #60–#62). **Phase 5 implementation complete** (#63–#66); epic [#17](https://github.com/madmmas/aiplane/issues/17) remains open pending epic close / merge of the stacked PRs.
 
