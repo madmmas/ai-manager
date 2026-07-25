@@ -1,0 +1,12 @@
+# Git backend stub — activate with CONFIG_MODE=git (network required; not used in CI).
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  cloud:
+    config:
+      server:
+        git:
+          uri: ${CONFIG_GIT_URI:https://github.com/madmmas/aiplane-config}
+          default-label: main
+          search-paths: "{application}"

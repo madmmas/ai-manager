@@ -43,8 +43,12 @@ This document describes how to implement the open-source roadmap for **AIPlane**
 | [#61](https://github.com/madmmas/aiplane/issues/61) | API key CRUD + ApiKeyAuthenticationFilter | `feat/phase-4-api-keys` | Phase 4 | Done ([#90](https://github.com/madmmas/aiplane/pull/90)) |
 | [#62](https://github.com/madmmas/aiplane/issues/62) | User + API key management UI | `feat/phase-4-user-manager-ui` | Phase 4 | Done ([#91](https://github.com/madmmas/aiplane/pull/91)) |
 | [#17](https://github.com/madmmas/aiplane/issues/17) | Phase 5 — Config Server Integration | `feat/phase-5-config-server` | Phase 5 | Open |
+| [#63](https://github.com/madmmas/aiplane/issues/63) | JDBC backend for Config Server | `feat/phase-5-config-server-jdbc` | Phase 5 | Done ([#93](https://github.com/madmmas/aiplane/pull/93)) |
+| [#64](https://github.com/madmmas/aiplane/issues/64) | PromptConfigExporter on version promotion | `feat/phase-5-prompt-config-exporter` | Phase 5 | Open |
+| [#65](https://github.com/madmmas/aiplane/issues/65) | Refresh endpoint proxied via API Server | `feat/phase-5-config-refresh-proxy` | Phase 5 | Open |
+| [#66](https://github.com/madmmas/aiplane/issues/66) | News Radar demo consuming Config Server | `feat/phase-5-news-radar-demo` | Phase 5 | Open |
 
-**Phase 1–4 complete** (#50–#53, #54–#56, #57–#59, #60–#62). Config Server export on promote remains Phase 5 ([#17](https://github.com/madmmas/aiplane/issues/17); hook stubbed in #51). Next up: Phase 5 Config Server ([#17](https://github.com/madmmas/aiplane/issues/17)) or Phase 0 leftovers.
+**Phase 1–4 complete** (#50–#53, #54–#56, #57–#59, #60–#62). Phase 5 in progress: JDBC backend (#63) done; next `PromptConfigExporter` (#64), refresh proxy (#65), News Radar demo (#66).
 
 ---
 

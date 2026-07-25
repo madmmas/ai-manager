@@ -23,7 +23,7 @@ services:
     ports:
       - "8888:8888"
     environment:
-      # native works today; jdbc/git land fully in Phase 5 (#17)
+      # native (default) | jdbc (#63) | git — jdbc uses DATABASE_* against shared Postgres
       SPRING_PROFILES_ACTIVE: ${CONFIG_MODE:-native}
       CONFIG_MODE: ${CONFIG_MODE:-native}
       CONFIG_GIT_URI: ${CONFIG_GIT_URI:-https://github.com/madmmas/aiplane-config}

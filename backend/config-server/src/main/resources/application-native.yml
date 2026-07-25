@@ -1,0 +1,10 @@
+# Local classpath backend (default CONFIG_MODE=native). No datasource required.
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: classpath:/config

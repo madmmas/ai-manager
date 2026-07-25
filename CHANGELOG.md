@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Config Server JDBC backend (`CONFIG_MODE=jdbc` / Spring profile `jdbc`): reads Flyway V9 `config_properties` via quoted `"KEY"` SQL; native mode unchanged; Testcontainers IT asserts HTTP property resolution (#63)
 - User Manager MFE: user list + invite form (project/role), API key list/create/revoke with show-once secret panel; wired to `@repo/api-client` user and API key hooks (#62)
 - API key CRUD + `ApiKeyAuthenticationFilter`: `GET/POST/DELETE /api/v1/api-keys`, SHA-256 hashed `aimg_` keys, scope enforcement on usage ingest/read, and `@repo/api-client` `useApiKeys` / `useCreateApiKey` / `useRevokeApiKey` (+ user list/invite hooks) (#61)
 - Invite flow + JWT auth: `POST /api/v1/users/invite`, `/auth/accept-invite`, `/auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/me`, and `GET /api/v1/users`; access/refresh tokens delivered as httpOnly cookies (`aiplane_access` / `aiplane_refresh`) (#60)

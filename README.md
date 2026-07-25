@@ -78,7 +78,7 @@ make docker-config   # validate compose files
 ```
 
 Compose files: `docker-compose.yml` (base stack) + `docker-compose.dev.yml` (local ports / seed defaults).  
-`CONFIG_MODE` defaults to `native` so the config server works today; JDBC/Git backends land in Phase 5 ([#17](https://github.com/madmmas/aiplane/issues/17)).
+`CONFIG_MODE` defaults to `native` (classpath config). Set `CONFIG_MODE=jdbc` to serve properties from shared Postgres `config_properties` (Flyway V9; Compose already passes `DATABASE_URL`). Git mode uses `CONFIG_GIT_URI` ([#17](https://github.com/madmmas/aiplane/issues/17) / [#63](https://github.com/madmmas/aiplane/issues/63)).
 
 ### Development (all apps)
 
