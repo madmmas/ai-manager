@@ -5,6 +5,7 @@ import {
   useGuardrailSets,
   useGuardrails,
   useProjects,
+  useUpdateGuardrail,
   useUpdateGuardrailSet,
 } from "@repo/api-client";
 import type {
@@ -14,7 +15,17 @@ import type {
   GuardrailStage,
   GuardrailType,
 } from "@repo/types";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input } from "@repo/ui";
+import { Badge, Button, Input, cn } from "@repo/ui";
+import {
+  IconBan,
+  IconPlus,
+  IconRegex,
+  IconRobot,
+  IconRuler,
+  IconSearch,
+  IconShieldCheck,
+  IconUserShield,
+} from "@tabler/icons-react";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 
 const EVALUATOR_TYPES: GuardrailType[] = ["keyword-blocklist", "regex-filter", "max-length"];
@@ -67,6 +78,118 @@ function moveItem<T>(items: T[], index: number, direction: -1 | 1): T[] {
   return next;
 }
 
+function displayTitle(name: string): string {
+  return name
+    .split(/[-_/]/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function stageLabel(stage: GuardrailStage): string {
+  return stage === "both" ? "input + output" : stage;
+}
+
+function ruleDescription(rule: Guardrail): string {
+  const stage = stageLabel(rule.stage);
+  const config = rule.config as Record<string, unknown>;
+
+  if (rule.type === "keyword-blocklist" && Array.isArray(config.keywords)) {
+    const keywords = config.keywords as string[];
+    const shown = keywords.slice(0, 2).join(", ");
+    const extra = keywords.length > 2 ? ` +${keywords.length - 2}` : "";
+    return `${stage} · blocks: ${shown}${extra}`;
+  }
+  if (rule.type === "regex-filter" && Array.isArray(config.patterns)) {
+    const patterns = config.patterns as string[];
+    return `${stage} · ${patterns.length} pattern${patterns.length === 1 ? "" : "s"}`;
+  }
+  if (rule.type === "max-length" && typeof config.maxChars === "number") {
+    return `${stage} · max ${config.maxChars} chars`;
+  }
+  if (rule.type === "pii-detection" && Array.isArray(config.entities)) {
+    return `${stage} · ${(config.entities as string[]).join(", ")}`;
+  }
+  if (rule.type === "custom-llm-judge" && typeof config.judgePromptId === "string") {
+    return `${stage} · uses ${config.judgePromptId}`;
+  }
+  return `${stage} · ${rule.type}`;
+}
+
+function actionBadgeClass(action: GuardrailAction): string {
+  switch (action) {
+    case "block":
+      return "border-transparent bg-[#0d2a1a] text-success";
+    case "redact":
+    case "warn":
+      return "border-transparent bg-[#2a2000] text-warning";
+    default:
+      return "border-transparent bg-secondary text-muted-foreground";
+  }
+}
+
+function ruleIcon(rule: Guardrail) {
+  switch (rule.type) {
+    case "keyword-blocklist":
+      return { Icon: IconBan, tone: "amber" as const };
+    case "regex-filter":
+      return { Icon: IconRegex, tone: "red" as const };
+    case "max-length":
+      return { Icon: IconRuler, tone: "amber" as const };
+    case "pii-detection":
+      return { Icon: IconUserShield, tone: "red" as const };
+    case "custom-llm-judge":
+      return { Icon: IconRobot, tone: "blue" as const };
+    default:
+      return { Icon: IconShieldCheck, tone: "blue" as const };
+  }
+}
+
+function iconToneClass(tone: "amber" | "red" | "blue"): string {
+  switch (tone) {
+    case "red":
+      return "bg-[#2a0d0d] text-[#f87171]";
+    case "blue":
+      return "bg-[#0d1a2a] text-primary";
+    default:
+      return "bg-[#2a2000] text-warning";
+  }
+}
+
+function EnableToggle({
+  enabled,
+  disabled,
+  onToggle,
+  label,
+}: {
+  enabled: boolean;
+  disabled?: boolean;
+  onToggle: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={enabled}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onToggle}
+      className={cn(
+        "relative h-[18px] w-8 shrink-0 rounded-full transition-colors disabled:opacity-50",
+        enabled ? "bg-[#0d2a1a]" : "border border-border bg-secondary",
+      )}
+    >
+      <span
+        className={cn(
+          "absolute top-0.5 size-3.5 rounded-full bg-foreground transition-[left]",
+          enabled ? "left-4" : "left-0.5",
+        )}
+      />
+    </button>
+  );
+}
+
 export default function App() {
   const { data: projects = [] } = useProjects();
   const [projectId, setProjectId] = useState<string>("");
@@ -80,9 +203,13 @@ export default function App() {
   });
 
   const createGuardrail = useCreateGuardrail();
+  const updateGuardrail = useUpdateGuardrail();
   const createSet = useCreateGuardrailSet();
   const updateSet = useUpdateGuardrailSet();
   const evaluateSet = useEvaluateGuardrailSet();
+
+  const [search, setSearch] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
 
   const [ruleName, setRuleName] = useState("");
   const [ruleType, setRuleType] = useState<GuardrailType>("keyword-blocklist");
@@ -118,6 +245,18 @@ export default function App() {
     return map;
   }, [guardrails]);
 
+  const filteredRules = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return guardrails;
+    return guardrails.filter(
+      (rule) =>
+        rule.name.toLowerCase().includes(q) ||
+        rule.type.toLowerCase().includes(q) ||
+        rule.action.toLowerCase().includes(q) ||
+        ruleDescription(rule).toLowerCase().includes(q),
+    );
+  }, [guardrails, search]);
+
   async function onCreateRule(event: FormEvent) {
     event.preventDefault();
     setRuleError(null);
@@ -136,9 +275,14 @@ export default function App() {
         config,
       });
       setRuleName("");
+      setShowCreate(false);
     } catch (error) {
       setRuleError(error instanceof Error ? error.message : "Failed to create rule");
     }
+  }
+
+  async function onToggleEnabled(rule: Guardrail) {
+    await updateGuardrail.mutateAsync({ id: rule.id, enabled: !rule.enabled });
   }
 
   async function onCreateSet(event: FormEvent) {
@@ -176,69 +320,65 @@ export default function App() {
     setEvalMeta({ blocked: response.blocked, shortCircuited: response.shortCircuited });
   }
 
+  const fieldClass =
+    "h-9 w-full rounded-md border border-border bg-background px-2.5 text-sm text-foreground";
+  const panelClass = "rounded-[10px] border border-border bg-background p-3";
+  const labelClass = "mb-1.5 text-2xs font-medium uppercase tracking-wide text-muted-foreground/70";
+
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6 p-4">
-      <header className="space-y-2">
-        <h2 className="text-2xl font-semibold tracking-tight">Guardrails</h2>
-        <p className="text-sm text-muted-foreground">
-          Compose evaluator rules, order them in a set, and test sample text before saving.
-        </p>
-        <label className="flex max-w-sm flex-col gap-1 text-sm">
-          <span className="font-medium">Project</span>
-          <select
-            aria-label="Project"
-            className="h-9 rounded-md border border-border bg-background px-3"
-            value={effectiveProjectId}
-            onChange={(e) => setProjectId(e.target.value)}
-          >
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      </header>
+    <div className="flex h-full min-h-0 flex-col bg-[#12151f] text-foreground">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+        <section aria-labelledby="guardrails-heading" className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="guardrails-heading" className="text-[15px] font-medium text-foreground">
+              Guardrails
+            </h2>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              className="h-8 border border-input bg-secondary text-primary hover:bg-muted"
+              onClick={() => setShowCreate((v) => !v)}
+            >
+              <IconPlus className="size-3.5" aria-hidden />
+              New guardrail
+            </Button>
+          </div>
 
-      <section aria-labelledby="rules-heading" className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle id="rules-heading">Rules</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {loadingRules ? (
-              <p className="text-sm text-muted-foreground">Loading rules…</p>
-            ) : guardrails.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No rules yet for this project.</p>
-            ) : (
-              <ul className="space-y-2">
-                {guardrails.map((rule) => (
-                  <li
-                    key={rule.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-3 py-2"
-                  >
-                    <div>
-                      <p className="font-medium">{rule.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {rule.type} · {rule.stage} · {rule.action}
-                      </p>
-                    </div>
-                    <Badge variant={rule.enabled ? "default" : "secondary"}>
-                      {rule.enabled ? "enabled" : "disabled"}
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+          <label className="flex max-w-xs flex-col gap-1 text-sm">
+            <span className="sr-only">Project</span>
+            <select
+              aria-label="Project"
+              className={fieldClass}
+              value={effectiveProjectId}
+              onChange={(e) => setProjectId(e.target.value)}
+            >
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Create rule</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-3" onSubmit={onCreateRule}>
+          <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5">
+            <IconSearch className="size-3.5 shrink-0 text-muted-foreground/50" aria-hidden />
+            <Input
+              aria-label="Search guardrails"
+              placeholder="Search guardrails…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-7 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+            />
+          </div>
+
+          {showCreate ? (
+            <form
+              className={cn(panelClass, "space-y-3")}
+              onSubmit={onCreateRule}
+              aria-label="Create rule"
+            >
+              <div className={labelClass}>Create rule</div>
               <label className="flex flex-col gap-1 text-sm" htmlFor="guardrail-rule-name">
                 <span className="font-medium">Name</span>
                 <Input
@@ -249,12 +389,12 @@ export default function App() {
                   placeholder="block-secrets"
                 />
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <label className="flex flex-col gap-1 text-sm">
                   <span className="font-medium">Type</span>
                   <select
                     aria-label="Evaluator type"
-                    className="h-9 rounded-md border border-border bg-background px-2"
+                    className={fieldClass}
                     value={ruleType}
                     onChange={(e) => {
                       const next = e.target.value as GuardrailType;
@@ -279,7 +419,7 @@ export default function App() {
                   <span className="font-medium">Stage</span>
                   <select
                     aria-label="Stage"
-                    className="h-9 rounded-md border border-border bg-background px-2"
+                    className={fieldClass}
                     value={ruleStage}
                     onChange={(e) => setRuleStage(e.target.value as GuardrailStage)}
                   >
@@ -294,7 +434,7 @@ export default function App() {
                   <span className="font-medium">Action</span>
                   <select
                     aria-label="Action"
-                    className="h-9 rounded-md border border-border bg-background px-2"
+                    className={fieldClass}
                     value={ruleAction}
                     onChange={(e) => setRuleAction(e.target.value as GuardrailAction)}
                   >
@@ -310,7 +450,7 @@ export default function App() {
                 <span className="font-medium">{configHint(ruleType)}</span>
                 <textarea
                   aria-label="Rule config"
-                  className="min-h-20 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  className="min-h-20 rounded-md border border-border bg-[#0a0d14] px-3 py-2 font-mono text-xs text-muted-foreground"
                   value={ruleConfig}
                   onChange={(e) => setRuleConfig(e.target.value)}
                 />
@@ -320,28 +460,87 @@ export default function App() {
                   {ruleError}
                 </p>
               ) : null}
-              <Button type="submit" disabled={createGuardrail.isPending}>
-                {createGuardrail.isPending ? "Saving…" : "Add rule"}
-              </Button>
+              <div className="flex gap-2">
+                <Button type="submit" size="sm" disabled={createGuardrail.isPending}>
+                  {createGuardrail.isPending ? "Saving…" : "Add rule"}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowCreate(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
             </form>
-          </CardContent>
-        </Card>
-      </section>
+          ) : null}
 
-      <section aria-labelledby="sets-heading" className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle id="sets-heading">Guardrail sets</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+          {loadingRules ? (
+            <p className="text-sm text-muted-foreground">Loading rules…</p>
+          ) : filteredRules.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No rules yet for this project.</p>
+          ) : (
+            <ul className="flex flex-col gap-2" aria-label="Rules">
+              {filteredRules.map((rule) => {
+                const { Icon, tone } = ruleIcon(rule);
+                return (
+                  <li
+                    key={rule.id}
+                    className="flex items-center gap-2.5 rounded-[10px] border border-border bg-background px-3.5 py-2.5"
+                  >
+                    <div
+                      className={cn(
+                        "flex size-8 shrink-0 items-center justify-center rounded-md",
+                        iconToneClass(tone),
+                      )}
+                    >
+                      <Icon className="size-4" aria-hidden />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-foreground">
+                        {displayTitle(rule.name)}
+                      </div>
+                      <div className="mt-0.5 truncate text-xs text-muted-foreground/70">
+                        {ruleDescription(rule)}
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-medium",
+                          actionBadgeClass(rule.action),
+                        )}
+                      >
+                        {rule.action}
+                      </span>
+                      <EnableToggle
+                        enabled={rule.enabled}
+                        disabled={updateGuardrail.isPending}
+                        label={`${rule.enabled ? "Disable" : "Enable"} ${rule.name}`}
+                        onToggle={() => void onToggleEnabled(rule)}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        <section aria-labelledby="sets-heading" className="grid gap-2.5 lg:grid-cols-2">
+          <div className={panelClass}>
+            <h3 id="sets-heading" className="mb-3 text-sm font-medium">
+              Guardrail sets
+            </h3>
             {loadingSets ? (
               <p className="text-sm text-muted-foreground">Loading sets…</p>
             ) : (
-              <label className="flex flex-col gap-1 text-sm">
+              <label className="mb-3 flex flex-col gap-1 text-sm">
                 <span className="font-medium">Active set</span>
                 <select
                   aria-label="Guardrail set"
-                  className="h-9 rounded-md border border-border bg-background px-3"
+                  className={fieldClass}
                   value={effectiveSetId}
                   onChange={(e) => setSelectedSetId(e.target.value)}
                 >
@@ -353,14 +552,14 @@ export default function App() {
                 </select>
               </label>
             )}
-            <form className="flex gap-2" onSubmit={onCreateSet}>
+            <form className="mb-3 flex gap-2" onSubmit={onCreateSet}>
               <Input
                 aria-label="New set name"
                 placeholder="production-input"
                 value={setName}
                 onChange={(e) => setSetName(e.target.value)}
               />
-              <Button type="submit" variant="secondary" disabled={createSet.isPending}>
+              <Button type="submit" size="sm" variant="secondary" disabled={createSet.isPending}>
                 Create set
               </Button>
             </form>
@@ -440,6 +639,7 @@ export default function App() {
                 </select>
                 <Button
                   type="button"
+                  size="sm"
                   onClick={onSaveOrdering}
                   disabled={!effectiveSetId || updateSet.isPending}
                 >
@@ -447,78 +647,77 @@ export default function App() {
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Test panel</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium">Sample input</span>
-              <textarea
-                aria-label="Sample input"
-                className="min-h-24 rounded-md border border-border bg-background px-3 py-2 text-sm"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium">Sample output</span>
-              <textarea
-                aria-label="Sample output"
-                className="min-h-20 rounded-md border border-border bg-background px-3 py-2 text-sm"
-                value={outputText}
-                onChange={(e) => setOutputText(e.target.value)}
-              />
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={runAll}
-                onChange={(e) => setRunAll(e.target.checked)}
-              />
-              Run all rules (disable short-circuit)
-            </label>
-            <Button
-              type="button"
-              onClick={onRunTest}
-              disabled={!effectiveSetId || evaluateSet.isPending}
-            >
-              {evaluateSet.isPending ? "Evaluating…" : "Run test"}
-            </Button>
-            {evalMeta ? (
-              <p className="text-sm" aria-live="polite">
-                {evalMeta.blocked ? "Blocked" : "Passed"}
-                {evalMeta.shortCircuited ? " (short-circuited)" : ""}
-              </p>
-            ) : null}
-            {results.length > 0 ? (
-              <ul className="space-y-2" aria-label="Evaluator results">
-                {results.map((result, index) => (
-                  <li
-                    key={`${result.guardrailId}-${result.stage}-${index}`}
-                    className="rounded-md border border-border px-3 py-2 text-sm"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium">
-                        {result.name} · {result.stage}
-                      </span>
-                      <Badge variant={result.passed ? "secondary" : "destructive"}>
-                        {result.passed ? "pass" : "fail"}
-                      </Badge>
-                    </div>
-                    {!result.passed ? (
-                      <p className="mt-1 text-muted-foreground">{result.reason}</p>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </CardContent>
-        </Card>
-      </section>
+          <div className={panelClass}>
+            <h3 className="mb-3 text-sm font-medium">Test panel</h3>
+            <div className="space-y-3">
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">Sample input</span>
+                <textarea
+                  aria-label="Sample input"
+                  className="min-h-24 rounded-md border border-border bg-[#0a0d14] px-3 py-2 text-sm"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">Sample output</span>
+                <textarea
+                  aria-label="Sample output"
+                  className="min-h-20 rounded-md border border-border bg-[#0a0d14] px-3 py-2 text-sm"
+                  value={outputText}
+                  onChange={(e) => setOutputText(e.target.value)}
+                />
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={runAll}
+                  onChange={(e) => setRunAll(e.target.checked)}
+                />
+                Run all rules (disable short-circuit)
+              </label>
+              <Button
+                type="button"
+                size="sm"
+                onClick={onRunTest}
+                disabled={!effectiveSetId || evaluateSet.isPending}
+              >
+                {evaluateSet.isPending ? "Evaluating…" : "Run test"}
+              </Button>
+              {evalMeta ? (
+                <p className="text-sm" aria-live="polite">
+                  {evalMeta.blocked ? "Blocked" : "Passed"}
+                  {evalMeta.shortCircuited ? " (short-circuited)" : ""}
+                </p>
+              ) : null}
+              {results.length > 0 ? (
+                <ul className="space-y-2" aria-label="Evaluator results">
+                  {results.map((result, index) => (
+                    <li
+                      key={`${result.guardrailId}-${result.stage}-${index}`}
+                      className="rounded-md border border-border px-3 py-2 text-sm"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium">
+                          {result.name} · {result.stage}
+                        </span>
+                        <Badge variant={result.passed ? "secondary" : "destructive"}>
+                          {result.passed ? "pass" : "fail"}
+                        </Badge>
+                      </div>
+                      {!result.passed ? (
+                        <p className="mt-1 text-muted-foreground">{result.reason}</p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

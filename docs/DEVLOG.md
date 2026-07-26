@@ -28,6 +28,13 @@ reverse-engineer from git history.
 
 ---
 
+## 2026-07-26 — guardrail CSS dual-mode + mock list UI (#109)
+
+Copied the #108 pattern for `@repo/guardrail`: per-remote Tailwind/PostCSS +
+`tokens.css` in `main.tsx`, dark `index.html` fonts, and dashboard `content` scan
+for `../guardrail/src`. Restyled the rule list to the mock (search, icon rows,
+action badges, enable toggles) while keeping sets + test panel below.
+
 ## 2026-07-26 — prompt-manager CSS dual-mode (#108)
 
 Chose **per-remote Tailwind pipeline + host content scan** for MFE styles (option 1 in
