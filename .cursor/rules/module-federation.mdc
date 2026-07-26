@@ -32,8 +32,8 @@ alwaysApply: false
   2. Standalone `index.html` uses `class="dark"` (SPEC default) and loads Inter + JetBrains Mono.
   3. Dashboard `tailwind.config.ts` `content` also scans that remote's `src/**/*.{ts,tsx}` so
      federated mounts get utility classes from the host stylesheet without a second global CSS
-     inject from the remote. Wired for prompt-manager (#108) and guardrail (#109); remaining
-     remotes tracked in #110–#111.
+     inject from the remote. Wired for prompt-manager (#108), guardrail (#109), and
+     user-manager (#110); remaining remote tracked in #111.
 - Be cautious with global/shared state across federation boundaries — each remote is
   a separately bundled app and can't assume in-memory state from another remote.
 - When scaffolding a new remote app, mirror the existing `vite.config.ts` federation

@@ -11,5 +11,6 @@ export default {
     // so remotes stay styled without shipping a second global CSS (see #107 / #108).
     "../prompt-manager/src/**/*.{ts,tsx}",
     "../guardrail/src/**/*.{ts,tsx}",
+    "../user-manager/src/**/*.{ts,tsx}",
   ],
 } satisfies Config;
