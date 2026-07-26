@@ -6,16 +6,6 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 import App from "./App";
 
-class ResizeObserverStub {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-}
-
-beforeEach(() => {
-  globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
-});
-
 function Wrapper({ children }: { children: ReactNode }) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -41,20 +31,21 @@ describe("Usages Data App", () => {
       </Wrapper>,
     );
 
-    expect(screen.getByRole("heading", { level: 2, name: "Usage" })).toBeInTheDocument();
-    expect(screen.getByText(/Usage overview/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: /Usage —/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export CSV" })).toBeInTheDocument();
 
     expect(
       await screen.findByRole("heading", { level: 3, name: "Total requests" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 3, name: "Total cost" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 3, name: "Avg latency" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Success rate" })).toBeInTheDocument();
 
     const requestsCard = screen
       .getByRole("heading", { level: 3, name: "Total requests" })
-      .closest(".rounded-xl") as HTMLElement;
+      .closest(".rounded-lg") as HTMLElement;
     expect(await within(requestsCard).findByText("6")).toBeInTheDocument();
-    expect(screen.getByText(/\d+ ms$/)).toBeInTheDocument();
+    expect(screen.getByText(/\d+ms$/)).toBeInTheDocument();
   });
 
   it("exposes project and period filters and updates on period change", async () => {
@@ -74,7 +65,7 @@ describe("Usages Data App", () => {
       level: 3,
       name: "Total requests",
     });
-    const requestsCard = requestsHeading.closest(".rounded-xl") as HTMLElement;
+    const requestsCard = requestsHeading.closest(".rounded-lg") as HTMLElement;
     expect(await within(requestsCard).findByText("6")).toBeInTheDocument();
 
     await user.selectOptions(periodSelect, "30d");
@@ -82,7 +73,7 @@ describe("Usages Data App", () => {
     expect(await within(requestsCard).findByText("8")).toBeInTheDocument();
   });
 
-  it("renders the usage-over-time chart region", async () => {
+  it("renders the daily calls chart, top prompts table, and provider breakdown", async () => {
     render(
       <Wrapper>
         <App />
@@ -90,9 +81,12 @@ describe("Usages Data App", () => {
     );
 
     expect(
-      await screen.findByRole("heading", { level: 3, name: "Usage over time" }),
+      await screen.findByRole("heading", { level: 3, name: "Daily calls" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Usage over time" })).toBeInTheDocument();
+    expect(await screen.findByRole("img", { name: "Usage over time" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Top prompts by cost" }),
+    ).toBeInTheDocument();
 
     const breakdown = await screen.findByLabelText("Provider breakdown");
     expect(within(breakdown).getByText("anthropic")).toBeInTheDocument();
