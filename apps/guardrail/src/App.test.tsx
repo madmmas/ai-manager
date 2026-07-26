@@ -24,7 +24,7 @@ describe("Guardrail App", () => {
     resetGuardrailMocks();
   });
 
-  it("renders rule builder and test panel", async () => {
+  it("renders mock-style list, create, and test panel", async () => {
     render(
       <Wrapper>
         <App />
@@ -32,10 +32,12 @@ describe("Guardrail App", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Guardrails" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Create rule" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "New guardrail" })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search guardrails…")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Test panel" })).toBeInTheDocument();
 
-    expect(await screen.findByText("block-secret-keyword")).toBeInTheDocument();
+    expect(await screen.findByText("Block Secret Keyword")).toBeInTheDocument();
+    expect(screen.getAllByText("block").length).toBeGreaterThan(0);
   });
 
   it("runs the test panel against the active set", async () => {
@@ -54,7 +56,7 @@ describe("Guardrail App", () => {
     expect(within(results).getByText("fail")).toBeInTheDocument();
   });
 
-  it("creates a rule from the form", async () => {
+  it("creates a rule from the New guardrail form", async () => {
     const user = userEvent.setup();
     render(
       <Wrapper>
@@ -62,14 +64,13 @@ describe("Guardrail App", () => {
       </Wrapper>,
     );
 
+    await user.click(screen.getByRole("button", { name: "New guardrail" }));
     const nameInput = await screen.findByPlaceholderText("block-secrets");
     await user.clear(nameInput);
     await user.type(nameInput, "ui-new-rule");
     await user.click(screen.getByRole("button", { name: "Add rule" }));
 
-    const rules = await screen.findByRole("heading", { name: "Rules" });
-    const rulesSection = rules.closest("section");
-    expect(rulesSection).not.toBeNull();
-    expect(await within(rulesSection as HTMLElement).findByText("ui-new-rule")).toBeInTheDocument();
+    const rules = await screen.findByRole("list", { name: "Rules" });
+    expect(await within(rules).findByText("Ui New Rule")).toBeInTheDocument();
   });
 });
