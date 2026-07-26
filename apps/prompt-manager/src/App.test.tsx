@@ -24,24 +24,23 @@ describe("Prompt Manager App", () => {
     resetPromptMocks();
   });
 
-  it("renders library and section headings", async () => {
+  it("renders library tab with prompts heading and cards", async () => {
     render(
       <Wrapper>
         <App />
       </Wrapper>,
     );
 
-    expect(screen.getByRole("heading", { name: "Prompt Manager" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Library" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Create prompt" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Library" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("heading", { name: "Prompts" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "New prompt" })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search prompts…")).toBeInTheDocument();
 
     expect(await screen.findByText("news-radar/dedup-judge")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Version timeline" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Editor" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Playground" })).toBeInTheDocument();
+    expect(screen.getByText("Dedup Judge")).toBeInTheDocument();
   });
 
-  it("creates a prompt via the form", async () => {
+  it("creates a prompt via the New prompt form", async () => {
     const user = userEvent.setup();
     render(
       <Wrapper>
@@ -49,21 +48,25 @@ describe("Prompt Manager App", () => {
       </Wrapper>,
     );
 
+    await user.click(screen.getByRole("button", { name: "New prompt" }));
     const nameInput = await screen.findByPlaceholderText("news-radar/my-prompt");
     await user.clear(nameInput);
     await user.type(nameInput, "news-radar/ui-new-prompt");
     await user.type(screen.getByPlaceholderText("What this prompt does"), "created in test");
     await user.click(screen.getByRole("button", { name: "Create prompt" }));
 
-    const library = screen.getByRole("heading", { name: "Library" });
-    const librarySection = library.closest("section");
-    expect(librarySection).not.toBeNull();
-    expect(
-      await within(librarySection as HTMLElement).findByText("news-radar/ui-new-prompt"),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: "Editor" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByDisplayValue("news-radar/ui-new-prompt")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: "Library" }));
+    const list = screen.getByRole("list", { name: "Prompt list" });
+    expect(await within(list).findByText("news-radar/ui-new-prompt")).toBeInTheDocument();
   });
 
-  it("shows timeline promote and runs the playground", async () => {
+  it("opens editor from a card, promotes, and runs playground", async () => {
     const user = userEvent.setup();
     render(
       <Wrapper>
@@ -71,19 +74,22 @@ describe("Prompt Manager App", () => {
       </Wrapper>,
     );
 
-    expect(await screen.findByText("news-radar/dedup-judge")).toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: /Open news-radar\/dedup-judge/i }));
+
+    expect(screen.getByRole("tab", { name: "Editor" })).toHaveAttribute("aria-selected", "true");
 
     const timeline = await screen.findByLabelText("Prompt versions");
-    expect(within(timeline).getByText("draft")).toBeInTheDocument();
+    expect(within(timeline).getByText(/draft/i)).toBeInTheDocument();
     expect(
       within(timeline).getByRole("button", { name: "Promote to testing" }),
     ).toBeInTheDocument();
 
+    await user.click(screen.getByRole("tab", { name: "Playground" }));
     await user.type(await screen.findByLabelText("Variable headline_a"), "Alpha headline");
     await user.type(screen.getByLabelText("Variable headline_b"), "Beta headline");
-    await user.click(screen.getByRole("button", { name: "Run" }));
+    await user.click(screen.getByRole("button", { name: /Run/i }));
 
     expect(await screen.findByLabelText("Playground response")).toHaveTextContent("Alpha headline");
-    expect(screen.getByText(/Latency \d+ ms/)).toBeInTheDocument();
+    expect(screen.getByText(/\d+ms/)).toBeInTheDocument();
   });
 });

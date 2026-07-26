@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Prompt Manager standalone + federated styling: Tailwind/PostCSS pipeline with `@repo/ui` tokens, dark default + fonts on `:5174`, and dashboard `content` scan so the federated route stays styled without a second global CSS inject (#108)
+- Prompt Manager Library / Editor / Playground UI aligned to the dashboard mock (tab bar, search, prompt card grid, version timeline, playground metrics) (#108)
 
 ### Added
 

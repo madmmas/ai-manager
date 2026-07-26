@@ -8,9 +8,26 @@ import {
   useRunPlayground,
   useUpdatePrompt,
 } from "@repo/api-client";
-import type { LLMProvider, PlaygroundRunResponse, PromptVersion } from "@repo/types";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input } from "@repo/ui";
+import type { LLMProvider, PlaygroundRunResponse, Prompt, PromptVersion } from "@repo/types";
+import { Badge, Button, Input, cn } from "@repo/ui";
+import {
+  IconArrowUpCircle,
+  IconClock,
+  IconDeviceFloppy,
+  IconPlayerPlay,
+  IconPlus,
+  IconSearch,
+  IconVersions,
+} from "@tabler/icons-react";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
+
+type TabId = "library" | "editor" | "playground";
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: "library", label: "Library" },
+  { id: "editor", label: "Editor" },
+  { id: "playground", label: "Playground" },
+];
 
 const PROVIDERS: LLMProvider[] = [
   "anthropic",
@@ -30,18 +47,23 @@ const PROVIDER_MODELS: Record<LLMProvider, string[]> = {
   gemini: ["gemini-2.0-flash"],
 };
 
-function statusBadgeVariant(
-  status: PromptVersion["status"],
-): "default" | "secondary" | "outline" | "destructive" {
+function displayTitle(name: string): string {
+  const slug = name.includes("/") ? name.slice(name.lastIndexOf("/") + 1) : name;
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function statusBadgeClass(status: PromptVersion["status"]): string {
   switch (status) {
     case "active":
-      return "default";
+      return "border-transparent bg-[#0d2a1a] text-success";
     case "testing":
-      return "secondary";
-    case "draft":
-      return "outline";
+      return "border-transparent bg-[#2a2000] text-warning";
     default:
-      return "outline";
+      return "border-transparent bg-secondary text-muted-foreground";
   }
 }
 
@@ -63,6 +85,97 @@ function extractVariableNames(template: string): string[] {
   return [...names];
 }
 
+function pickDisplayVersion(
+  versions: PromptVersion[],
+  activeVersionId?: string,
+): PromptVersion | undefined {
+  if (!versions.length) return undefined;
+  return (
+    versions.find((v) => v.id === activeVersionId) ??
+    versions.find((v) => v.status === "active") ??
+    versions[versions.length - 1]
+  );
+}
+
+function formatMonthDay(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function StatusBadge({ status }: { status: PromptVersion["status"] }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-medium",
+        statusBadgeClass(status),
+      )}
+    >
+      {status === "active" || status === "testing" ? (
+        <span className="size-1.5 rounded-full bg-current" aria-hidden />
+      ) : null}
+      {status}
+    </span>
+  );
+}
+
+function PromptCard({
+  prompt,
+  selected,
+  onSelect,
+}: {
+  prompt: Prompt;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const { data: versions = [] } = usePromptVersions(prompt.id);
+  const display = pickDisplayVersion(versions, prompt.activeVersionId);
+  const latency = display?.metrics?.avgLatencyMs;
+
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      aria-label={`Open ${prompt.name}`}
+      onClick={onSelect}
+      className={cn(
+        "rounded-[10px] border bg-background p-3 text-left transition-colors",
+        selected ? "border-primary" : "border-border hover:border-input",
+      )}
+    >
+      <div className="mb-1.5 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-medium text-foreground">
+            {displayTitle(prompt.name)}
+          </div>
+          <div className="mt-0.5 font-mono text-xs text-muted-foreground/70">{prompt.name}</div>
+        </div>
+        {display ? <StatusBadge status={display.status} /> : null}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        {display ? (
+          <Badge
+            variant="secondary"
+            className="rounded-full font-mono text-2xs font-normal text-muted-foreground"
+          >
+            {display.model}
+          </Badge>
+        ) : null}
+        {display ? (
+          <span className="inline-flex items-center gap-0.5 text-2xs text-muted-foreground/70">
+            <IconVersions className="size-3" aria-hidden />v{display.version}
+          </span>
+        ) : null}
+        {latency != null ? (
+          <span className="inline-flex items-center gap-0.5 text-2xs text-muted-foreground/70">
+            <IconClock className="size-3" aria-hidden />
+            {Math.round(latency)}ms
+          </span>
+        ) : null}
+      </div>
+    </button>
+  );
+}
+
 export default function App() {
   const { data: projects = [] } = useProjects();
   const [projectId, setProjectId] = useState("");
@@ -76,6 +189,10 @@ export default function App() {
   const createVersion = useCreatePromptVersion();
   const promoteVersion = usePromotePromptVersion();
   const runPlayground = useRunPlayground();
+
+  const [tab, setTab] = useState<TabId>("library");
+  const [search, setSearch] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
 
   const [selectedPromptId, setSelectedPromptId] = useState("");
   const selectedPrompt = useMemo(
@@ -97,6 +214,17 @@ export default function App() {
       versions[versions.length - 1]
     );
   }, [versions, selectedVersionId, selectedPrompt?.activeVersionId]);
+
+  const filteredPrompts = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return prompts;
+    return prompts.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q) ||
+        p.tags.some((t) => t.toLowerCase().includes(q)),
+    );
+  }, [prompts, search]);
 
   const [promptName, setPromptName] = useState("");
   const [promptDescription, setPromptDescription] = useState("");
@@ -125,6 +253,7 @@ export default function App() {
   const [model, setModel] = useState(PROVIDER_MODELS.anthropic[0]);
   const [temperature, setTemperature] = useState("0.2");
   const [maxTokens, setMaxTokens] = useState("1024");
+  const [topP, setTopP] = useState("1.0");
   const [editorError, setEditorError] = useState<string | null>(null);
   const [variableValues, setVariableValues] = useState<Record<string, string>>({});
   const [playgroundResult, setPlaygroundResult] = useState<PlaygroundRunResponse | null>(null);
@@ -138,6 +267,7 @@ export default function App() {
       setModel(PROVIDER_MODELS.anthropic[0]);
       setTemperature("0.2");
       setMaxTokens("1024");
+      setTopP("1.0");
       setPlaygroundResult(null);
       setPlaygroundError(null);
       return;
@@ -148,6 +278,7 @@ export default function App() {
     setModel(selectedVersion.model);
     setTemperature(String(selectedVersion.parameters.temperature));
     setMaxTokens(String(selectedVersion.parameters.maxTokens));
+    setTopP(String(selectedVersion.parameters.topP ?? 1));
     setPlaygroundResult(null);
     setPlaygroundError(null);
   }, [selectedVersion]);
@@ -166,6 +297,12 @@ export default function App() {
       return next;
     });
   }, [variableNames]);
+
+  function openPrompt(promptId: string) {
+    setSelectedPromptId(promptId);
+    setSelectedVersionId("");
+    setTab("editor");
+  }
 
   async function onCreatePrompt(event: FormEvent) {
     event.preventDefault();
@@ -187,8 +324,10 @@ export default function App() {
       setPromptName("");
       setPromptDescription("");
       setPromptTags("");
+      setShowCreate(false);
       setSelectedPromptId(created.id);
       setSelectedVersionId("");
+      setTab("editor");
     } catch (error) {
       setCreateError(error instanceof Error ? error.message : "Failed to create prompt");
     }
@@ -213,6 +352,7 @@ export default function App() {
     if (!effectivePromptId) return;
     const temp = Number(temperature);
     const tokens = Number(maxTokens);
+    const top = Number(topP);
     if (!Number.isFinite(temp) || temp < 0 || temp > 2) {
       setEditorError("Temperature must be between 0 and 2");
       return;
@@ -228,7 +368,11 @@ export default function App() {
         provider,
         systemPrompt,
         userPromptTemplate,
-        parameters: { temperature: temp, maxTokens: tokens },
+        parameters: {
+          temperature: temp,
+          maxTokens: tokens,
+          ...(Number.isFinite(top) ? { topP: top } : {}),
+        },
       });
       setSelectedVersionId(created.id);
     } catch (error) {
@@ -261,92 +405,100 @@ export default function App() {
     }
   }
 
+  const fieldClass =
+    "h-9 w-full rounded-md border border-border bg-background px-2.5 text-sm text-foreground";
+  const areaClass =
+    "min-h-[78px] w-full rounded-md border border-border bg-[#0a0d14] px-2.5 py-2 font-mono text-xs leading-relaxed text-muted-foreground";
+  const panelClass = "rounded-[10px] border border-border bg-background p-3";
+  const labelClass = "mb-1.5 text-2xs font-medium uppercase tracking-wide text-muted-foreground/70";
+
   return (
-    <div className="bg-background text-foreground">
-      <div className="mx-auto flex max-w-5xl flex-col gap-6 p-4 md:p-6">
-        <header className="space-y-2">
-          <h2 className="text-lg font-medium tracking-tight text-foreground">Prompt Manager</h2>
-          <p className="text-sm text-muted-foreground">
-            Browse the prompt library, promote versions, edit drafts, and run the playground.
-          </p>
-          <label className="flex max-w-sm flex-col gap-1 text-sm">
-            <span className="font-medium">Project</span>
-            <select
-              aria-label="Project"
-              className="h-9 rounded-md border border-border bg-background px-3"
-              value={effectiveProjectId}
-              onChange={(e) => {
-                setProjectId(e.target.value);
-                setSelectedPromptId("");
-                setSelectedVersionId("");
-              }}
-            >
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        </header>
+    <div className="flex h-full min-h-0 flex-col bg-[#12151f] text-foreground">
+      <div
+        role="tablist"
+        aria-label="Prompt Manager views"
+        className="flex shrink-0 gap-0 border-b border-border bg-background px-4"
+      >
+        {TABS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === item.id}
+            id={`tab-${item.id}`}
+            onClick={() => setTab(item.id)}
+            className={cn(
+              "border-b-2 px-3.5 py-2.5 text-sm transition-colors",
+              tab === item.id
+                ? "border-primary font-medium text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
 
-        <section aria-labelledby="library-heading" className="grid gap-4 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle id="library-heading">Library</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {loadingPrompts ? (
-                <p className="text-sm text-muted-foreground">Loading prompts…</p>
-              ) : prompts.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No prompts yet for this project.</p>
-              ) : (
-                <ul className="space-y-2" aria-label="Prompt list">
-                  {prompts.map((prompt) => {
-                    const selected = prompt.id === effectivePromptId;
-                    return (
-                      <li key={prompt.id}>
-                        <button
-                          type="button"
-                          className={`w-full rounded-md border px-3 py-2 text-left ${
-                            selected
-                              ? "border-primary bg-accent/40"
-                              : "border-border hover:bg-muted/40"
-                          }`}
-                          aria-pressed={selected}
-                          onClick={() => {
-                            setSelectedPromptId(prompt.id);
-                            setSelectedVersionId("");
-                          }}
-                        >
-                          <p className="font-medium">{prompt.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {prompt.description || "No description"}
-                          </p>
-                          {prompt.tags.length > 0 ? (
-                            <div className="mt-1 flex flex-wrap gap-1">
-                              {prompt.tags.map((tag) => (
-                                <Badge key={tag} variant="secondary">
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          ) : null}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
+      <div
+        className="min-h-0 flex-1 overflow-y-auto p-4"
+        role="tabpanel"
+        aria-labelledby={`tab-${tab}`}
+      >
+        {tab === "library" ? (
+          <section aria-labelledby="prompts-heading" className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <h2 id="prompts-heading" className="text-[15px] font-medium text-foreground">
+                Prompts
+              </h2>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="h-8 border border-input bg-secondary text-primary hover:bg-muted"
+                onClick={() => setShowCreate((v) => !v)}
+              >
+                <IconPlus className="size-3.5" aria-hidden />
+                New prompt
+              </Button>
+            </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Create prompt</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-3" onSubmit={onCreatePrompt}>
+            <label className="flex max-w-xs flex-col gap-1 text-sm">
+              <span className="sr-only">Project</span>
+              <select
+                aria-label="Project"
+                className={fieldClass}
+                value={effectiveProjectId}
+                onChange={(e) => {
+                  setProjectId(e.target.value);
+                  setSelectedPromptId("");
+                  setSelectedVersionId("");
+                }}
+              >
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5">
+              <IconSearch className="size-3.5 shrink-0 text-muted-foreground/50" aria-hidden />
+              <Input
+                aria-label="Search prompts"
+                placeholder="Search prompts…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-7 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+              />
+            </div>
+
+            {showCreate ? (
+              <form
+                className={cn(panelClass, "grid gap-3 sm:grid-cols-3")}
+                onSubmit={onCreatePrompt}
+                aria-label="Create prompt"
+              >
                 <label className="flex flex-col gap-1 text-sm" htmlFor="prompt-name">
                   <span className="font-medium">Name</span>
                   <Input
@@ -376,70 +528,97 @@ export default function App() {
                   />
                 </label>
                 {createError ? (
-                  <p className="text-sm text-destructive" role="alert">
+                  <p className="text-sm text-destructive sm:col-span-3" role="alert">
                     {createError}
                   </p>
                 ) : null}
-                <Button type="submit" disabled={createPrompt.isPending}>
-                  {createPrompt.isPending ? "Saving…" : "Create prompt"}
-                </Button>
+                <div className="flex gap-2 sm:col-span-3">
+                  <Button type="submit" size="sm" disabled={createPrompt.isPending}>
+                    {createPrompt.isPending ? "Saving…" : "Create prompt"}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowCreate(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </form>
-            </CardContent>
-          </Card>
-        </section>
+            ) : null}
 
-        {selectedPrompt ? (
-          <>
-            <section aria-labelledby="meta-heading">
-              <Card>
-                <CardHeader>
-                  <CardTitle id="meta-heading">Edit prompt</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form className="grid gap-3 sm:grid-cols-3" onSubmit={onSavePromptMeta}>
-                    <label className="flex flex-col gap-1 text-sm" htmlFor="edit-prompt-name">
-                      <span className="font-medium">Name</span>
-                      <Input
-                        id="edit-prompt-name"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                      />
-                    </label>
-                    <label
-                      className="flex flex-col gap-1 text-sm"
-                      htmlFor="edit-prompt-description"
+            {loadingPrompts ? (
+              <p className="text-sm text-muted-foreground">Loading prompts…</p>
+            ) : filteredPrompts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No prompts yet for this project.</p>
+            ) : (
+              <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2" aria-label="Prompt list">
+                {filteredPrompts.map((prompt) => (
+                  <li key={prompt.id}>
+                    <PromptCard
+                      prompt={prompt}
+                      selected={prompt.id === effectivePromptId}
+                      onSelect={() => openPrompt(prompt.id)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        ) : null}
+
+        {tab === "editor" ? (
+          <section aria-labelledby="editor-heading" className="space-y-3">
+            <h2 id="editor-heading" className="sr-only">
+              Editor
+            </h2>
+            {!selectedPrompt ? (
+              <p className="text-sm text-muted-foreground">Select a prompt from the Library.</p>
+            ) : (
+              <>
+                <form
+                  className={cn(panelClass, "grid gap-3 sm:grid-cols-3")}
+                  onSubmit={onSavePromptMeta}
+                >
+                  <label className="flex flex-col gap-1 text-sm" htmlFor="edit-prompt-name">
+                    <span className="font-medium">Name</span>
+                    <Input
+                      id="edit-prompt-name"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm" htmlFor="edit-prompt-description">
+                    <span className="font-medium">Description</span>
+                    <Input
+                      id="edit-prompt-description"
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm" htmlFor="edit-prompt-tags">
+                    <span className="font-medium">Tags</span>
+                    <Input
+                      id="edit-prompt-tags"
+                      value={editTags}
+                      onChange={(e) => setEditTags(e.target.value)}
+                    />
+                  </label>
+                  <div className="sm:col-span-3">
+                    <Button
+                      type="submit"
+                      size="sm"
+                      variant="secondary"
+                      disabled={updatePrompt.isPending}
                     >
-                      <span className="font-medium">Description</span>
-                      <Input
-                        id="edit-prompt-description"
-                        value={editDescription}
-                        onChange={(e) => setEditDescription(e.target.value)}
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1 text-sm" htmlFor="edit-prompt-tags">
-                      <span className="font-medium">Tags</span>
-                      <Input
-                        id="edit-prompt-tags"
-                        value={editTags}
-                        onChange={(e) => setEditTags(e.target.value)}
-                      />
-                    </label>
-                    <div className="sm:col-span-3">
-                      <Button type="submit" variant="secondary" disabled={updatePrompt.isPending}>
-                        Save prompt details
-                      </Button>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
-            </section>
+                      Save prompt details
+                    </Button>
+                  </div>
+                </form>
 
-            <section aria-labelledby="timeline-heading">
-              <Card>
-                <CardHeader>
-                  <CardTitle id="timeline-heading">Version timeline</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
+                <div className={panelClass}>
+                  <div className={labelClass}>Version history — {selectedPrompt.name}</div>
                   {loadingVersions ? (
                     <p className="text-sm text-muted-foreground">Loading versions…</p>
                   ) : versions.length === 0 ? (
@@ -447,217 +626,357 @@ export default function App() {
                       No versions yet — save a draft from the editor.
                     </p>
                   ) : (
-                    <ol className="flex flex-wrap items-stretch gap-2" aria-label="Prompt versions">
+                    <ol
+                      className="relative flex items-start gap-0 overflow-x-auto py-2"
+                      aria-label="Prompt versions"
+                    >
+                      <div
+                        className="pointer-events-none absolute top-[22px] right-2 left-2 h-px bg-border"
+                        aria-hidden
+                      />
                       {versions.map((version, index) => {
                         const selected = version.id === selectedVersion?.id;
+                        const isActive = version.status === "active";
                         return (
-                          <li key={version.id} className="flex items-center gap-2">
-                            {index > 0 ? (
-                              <span className="text-muted-foreground" aria-hidden>
-                                —
-                              </span>
-                            ) : null}
-                            <div
-                              className={`min-w-40 rounded-md border px-3 py-2 ${
-                                selected ? "border-primary bg-accent/30" : "border-border"
-                              }`}
-                            >
+                          <li key={version.id} className="relative z-[1] flex shrink-0 items-start">
+                            {index > 0 ? <div className="w-3 shrink-0" aria-hidden /> : null}
+                            <div className="flex w-14 flex-col items-center gap-1.5">
                               <button
                                 type="button"
-                                className="w-full text-left"
                                 aria-pressed={selected}
                                 aria-label={`Select version ${version.version}`}
                                 onClick={() => setSelectedVersionId(version.id)}
+                                className={cn(
+                                  "flex size-6 items-center justify-center rounded-full border-[1.5px] font-mono text-2xs font-medium transition-colors",
+                                  isActive
+                                    ? "border-primary bg-secondary text-primary"
+                                    : selected
+                                      ? "border-muted-foreground bg-muted text-foreground shadow-[0_0_0_3px_#2e3248]"
+                                      : "border-border bg-background text-muted-foreground",
+                                )}
                               >
-                                <p className="text-sm font-medium">v{version.version}</p>
-                                <p className="text-xs text-muted-foreground">{version.model}</p>
+                                {version.version}
                               </button>
-                              <div className="mt-2 flex flex-wrap items-center gap-2">
-                                <Badge variant={statusBadgeVariant(version.status)}>
-                                  {version.status}
-                                </Badge>
-                                {canPromote(version.status) ? (
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={promoteVersion.isPending}
-                                    onClick={() => onPromote(version.id)}
-                                  >
-                                    {promoteLabel(version.status)}
-                                  </Button>
-                                ) : null}
-                              </div>
+                              <span
+                                className={cn(
+                                  "text-center text-2xs leading-tight",
+                                  isActive
+                                    ? "font-medium text-primary"
+                                    : "text-muted-foreground/70",
+                                )}
+                              >
+                                {version.status}
+                                <br />
+                                {formatMonthDay(version.createdAt)}
+                              </span>
+                              {canPromote(version.status) ? (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-6 px-1.5 text-2xs"
+                                  disabled={promoteVersion.isPending}
+                                  onClick={() => onPromote(version.id)}
+                                >
+                                  {promoteLabel(version.status)}
+                                </Button>
+                              ) : null}
                             </div>
                           </li>
                         );
                       })}
                     </ol>
                   )}
-                </CardContent>
-              </Card>
-            </section>
+                </div>
 
-            <section aria-labelledby="editor-heading" className="grid gap-4 lg:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle id="editor-heading">Editor</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span className="font-medium">System prompt</span>
-                    <textarea
-                      aria-label="System prompt"
-                      className="min-h-24 rounded-md border border-border bg-background px-3 py-2 text-sm"
-                      value={systemPrompt}
-                      onChange={(e) => setSystemPrompt(e.target.value)}
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm">
-                    <span className="font-medium">User prompt template</span>
-                    <textarea
-                      aria-label="User prompt template"
-                      className="min-h-28 rounded-md border border-border bg-background px-3 py-2 text-sm"
-                      value={userPromptTemplate}
-                      onChange={(e) => setUserPromptTemplate(e.target.value)}
-                    />
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="flex flex-col gap-1 text-sm">
-                      <span className="font-medium">Provider</span>
-                      <select
-                        aria-label="Provider"
-                        className="h-9 rounded-md border border-border bg-background px-2"
-                        value={provider}
-                        onChange={(e) => {
-                          const next = e.target.value as LLMProvider;
-                          setProvider(next);
-                          setModel(PROVIDER_MODELS[next][0]);
-                        }}
-                      >
-                        {PROVIDERS.map((p) => (
-                          <option key={p} value={p}>
-                            {p}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="flex flex-col gap-1 text-sm">
-                      <span className="font-medium">Model</span>
-                      <select
-                        aria-label="Model"
-                        className="h-9 rounded-md border border-border bg-background px-2"
-                        value={model}
-                        onChange={(e) => setModel(e.target.value)}
-                      >
-                        {PROVIDER_MODELS[provider].map((m) => (
-                          <option key={m} value={m}>
-                            {m}
-                          </option>
-                        ))}
-                        {!PROVIDER_MODELS[provider].includes(model) ? (
-                          <option value={model}>{model}</option>
-                        ) : null}
-                      </select>
-                    </label>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="flex flex-col gap-1 text-sm" htmlFor="param-temperature">
-                      <span className="font-medium">Temperature</span>
-                      <Input
-                        id="param-temperature"
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        max="2"
-                        value={temperature}
-                        onChange={(e) => setTemperature(e.target.value)}
+                <div className="grid gap-2.5 lg:grid-cols-[1fr_196px]">
+                  <div className="space-y-2">
+                    <div className={panelClass}>
+                      <div className={labelClass}>System prompt</div>
+                      <textarea
+                        aria-label="System prompt"
+                        className={areaClass}
+                        value={systemPrompt}
+                        onChange={(e) => setSystemPrompt(e.target.value)}
                       />
-                    </label>
-                    <label className="flex flex-col gap-1 text-sm" htmlFor="param-max-tokens">
-                      <span className="font-medium">Max tokens</span>
-                      <Input
-                        id="param-max-tokens"
-                        type="number"
-                        min="1"
-                        value={maxTokens}
-                        onChange={(e) => setMaxTokens(e.target.value)}
+                    </div>
+                    <div className={panelClass}>
+                      <div className={labelClass}>User prompt template</div>
+                      <textarea
+                        aria-label="User prompt template"
+                        className={cn(areaClass, "min-h-28")}
+                        value={userPromptTemplate}
+                        onChange={(e) => setUserPromptTemplate(e.target.value)}
                       />
-                    </label>
-                  </div>
-                  {editorError ? (
-                    <p className="text-sm text-destructive" role="alert">
-                      {editorError}
-                    </p>
-                  ) : null}
-                  <Button
-                    type="button"
-                    onClick={onSaveNewVersion}
-                    disabled={!effectivePromptId || createVersion.isPending}
-                  >
-                    {createVersion.isPending ? "Saving…" : "Save as new version"}
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Playground</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {variableNames.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No {"{{variables}}"} in the user template — run with the current text.
-                    </p>
-                  ) : (
-                    variableNames.map((name) => (
-                      <label
-                        key={name}
-                        className="flex flex-col gap-1 text-sm"
-                        htmlFor={`var-${name}`}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        onClick={onSaveNewVersion}
+                        disabled={!effectivePromptId || createVersion.isPending}
                       >
-                        <span className="font-medium">{`{{${name}}}`}</span>
-                        <Input
-                          id={`var-${name}`}
-                          aria-label={`Variable ${name}`}
-                          value={variableValues[name] ?? ""}
-                          onChange={(e) =>
-                            setVariableValues((prev) => ({ ...prev, [name]: e.target.value }))
-                          }
-                        />
-                      </label>
-                    ))
-                  )}
-                  <Button
-                    type="button"
-                    onClick={onRunPlayground}
-                    disabled={!selectedVersion || runPlayground.isPending}
-                  >
-                    {runPlayground.isPending ? "Running…" : "Run"}
-                  </Button>
-                  {playgroundError ? (
-                    <p className="text-sm text-destructive" role="alert">
-                      {playgroundError}
-                    </p>
-                  ) : null}
-                  {playgroundResult ? (
-                    <div className="space-y-2" aria-live="polite">
-                      <p className="text-sm text-muted-foreground">
-                        Latency {playgroundResult.latencyMs} ms · {playgroundResult.provider}/
-                        {playgroundResult.model}
+                        <IconDeviceFloppy className="size-3.5" aria-hidden />
+                        {createVersion.isPending ? "Saving…" : "Save"}
+                      </Button>
+                      {selectedVersion && canPromote(selectedVersion.status) ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="h-8 border border-input bg-secondary text-primary"
+                          disabled={promoteVersion.isPending}
+                          onClick={() => onPromote(selectedVersion.id)}
+                        >
+                          <IconArrowUpCircle className="size-3.5" aria-hidden />
+                          Promote
+                        </Button>
+                      ) : null}
+                    </div>
+                    {editorError ? (
+                      <p className="text-sm text-destructive" role="alert">
+                        {editorError}
                       </p>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className={panelClass}>
+                      <div className="mb-2 flex items-center gap-1.5 rounded-md border border-border bg-secondary px-2 py-1.5">
+                        <span className="size-2 shrink-0 rounded-full bg-success" aria-hidden />
+                        <select
+                          aria-label="Model"
+                          className="min-w-0 flex-1 bg-transparent font-mono text-xs font-medium text-foreground outline-none"
+                          value={model}
+                          onChange={(e) => setModel(e.target.value)}
+                        >
+                          {PROVIDER_MODELS[provider].map((m) => (
+                            <option key={m} value={m}>
+                              {m}
+                            </option>
+                          ))}
+                          {!PROVIDER_MODELS[provider].includes(model) ? (
+                            <option value={model}>{model}</option>
+                          ) : null}
+                        </select>
+                      </div>
+                      <label className="mb-2 flex flex-col gap-1 text-sm">
+                        <span className="font-medium">Provider</span>
+                        <select
+                          aria-label="Provider"
+                          className={fieldClass}
+                          value={provider}
+                          onChange={(e) => {
+                            const next = e.target.value as LLMProvider;
+                            setProvider(next);
+                            setModel(PROVIDER_MODELS[next][0]);
+                          }}
+                        >
+                          {PROVIDERS.map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <div className={labelClass}>Parameters</div>
+                      <div className="space-y-0 divide-y divide-border/60">
+                        <div className="flex items-center justify-between gap-2 py-1.5 text-xs">
+                          <label htmlFor="param-temperature" className="text-muted-foreground">
+                            Temperature
+                          </label>
+                          <Input
+                            id="param-temperature"
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="2"
+                            value={temperature}
+                            onChange={(e) => setTemperature(e.target.value)}
+                            className="h-7 w-16 border-0 bg-transparent px-0 text-right font-mono text-xs shadow-none focus-visible:ring-0"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between gap-2 py-1.5 text-xs">
+                          <label htmlFor="param-max-tokens" className="text-muted-foreground">
+                            Max tokens
+                          </label>
+                          <Input
+                            id="param-max-tokens"
+                            type="number"
+                            min="1"
+                            value={maxTokens}
+                            onChange={(e) => setMaxTokens(e.target.value)}
+                            className="h-7 w-16 border-0 bg-transparent px-0 text-right font-mono text-xs shadow-none focus-visible:ring-0"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between gap-2 py-1.5 text-xs">
+                          <label htmlFor="param-top-p" className="text-muted-foreground">
+                            Top P
+                          </label>
+                          <Input
+                            id="param-top-p"
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="1"
+                            value={topP}
+                            onChange={(e) => setTopP(e.target.value)}
+                            className="h-7 w-16 border-0 bg-transparent px-0 text-right font-mono text-xs shadow-none focus-visible:ring-0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {selectedVersion?.metrics ? (
+                      <div className={panelClass}>
+                        <div className={labelClass}>v{selectedVersion.version} metrics</div>
+                        <div className="space-y-0 divide-y divide-border/60 text-xs">
+                          <div className="flex justify-between py-1.5">
+                            <span className="text-muted-foreground">Calls</span>
+                            <span className="font-mono font-medium">
+                              {selectedVersion.metrics.requestCount.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between py-1.5">
+                            <span className="text-muted-foreground">Avg latency</span>
+                            <span className="font-mono font-medium">
+                              {Math.round(selectedVersion.metrics.avgLatencyMs)}ms
+                            </span>
+                          </div>
+                          <div className="flex justify-between py-1.5">
+                            <span className="text-muted-foreground">Avg cost</span>
+                            <span className="font-mono font-medium">
+                              ${selectedVersion.metrics.avgCostUsd.toFixed(4)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between py-1.5">
+                            <span className="text-muted-foreground">Success</span>
+                            <span className="font-mono font-medium">
+                              {((1 - selectedVersion.metrics.errorRate) * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </>
+            )}
+          </section>
+        ) : null}
+
+        {tab === "playground" ? (
+          <section aria-labelledby="playground-heading" className="space-y-3">
+            <h2 id="playground-heading" className="sr-only">
+              Playground
+            </h2>
+            {!selectedPrompt || !selectedVersion ? (
+              <p className="text-sm text-muted-foreground">
+                Select a prompt and version from the Library / Editor first.
+              </p>
+            ) : (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    Testing{" "}
+                    <strong className="font-medium text-foreground">{selectedPrompt.name}</strong>
+                    {" · "}v{selectedVersion.version} ({selectedVersion.status})
+                  </p>
+                </div>
+
+                <div className="grid gap-2.5 lg:grid-cols-[1fr_156px]">
+                  <div className="space-y-2">
+                    <div className={panelClass}>
+                      <div className={labelClass}>Variables</div>
+                      {variableNames.length === 0 ? (
+                        <p className="mb-2 text-sm text-muted-foreground">
+                          No {"{{variables}}"} in the user template — run with the current text.
+                        </p>
+                      ) : (
+                        <div className="mb-2 flex flex-col gap-1.5">
+                          {variableNames.map((name) => (
+                            <label
+                              key={name}
+                              className="flex flex-col gap-0.5"
+                              htmlFor={`var-${name}`}
+                            >
+                              <span className="text-2xs font-medium uppercase tracking-wide text-muted-foreground/70">
+                                {name}
+                              </span>
+                              <Input
+                                id={`var-${name}`}
+                                aria-label={`Variable ${name}`}
+                                value={variableValues[name] ?? ""}
+                                onChange={(e) =>
+                                  setVariableValues((prev) => ({
+                                    ...prev,
+                                    [name]: e.target.value,
+                                  }))
+                                }
+                                className="h-8 border-border bg-background font-mono text-xs"
+                              />
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={onRunPlayground}
+                        disabled={runPlayground.isPending}
+                        className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-md border border-[#1d5c35] bg-[#0d2a1a] px-2 py-1.5 text-xs font-medium text-success hover:opacity-90 disabled:opacity-50"
+                      >
+                        <IconPlayerPlay className="size-3.5" aria-hidden />
+                        {runPlayground.isPending ? "Running…" : "Run"}
+                        <span className="text-2xs opacity-60">⌘↵</span>
+                      </button>
+                    </div>
+
+                    <div className={panelClass}>
+                      <div className={labelClass}>Response</div>
+                      {playgroundError ? (
+                        <p className="text-sm text-destructive" role="alert">
+                          {playgroundError}
+                        </p>
+                      ) : null}
                       <pre
                         aria-label="Playground response"
-                        className="overflow-x-auto rounded-md border border-border bg-muted/30 p-3 text-sm whitespace-pre-wrap"
+                        className="min-h-[90px] overflow-x-auto rounded-md border border-border bg-[#0a0d14] p-2.5 font-mono text-xs leading-relaxed whitespace-pre-wrap text-foreground"
                       >
-                        {playgroundResult.content}
+                        {playgroundResult?.content ?? ""}
                       </pre>
                     </div>
-                  ) : null}
-                </CardContent>
-              </Card>
-            </section>
-          </>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <div className="rounded-md bg-secondary p-2 text-center">
+                      <div className="font-mono text-sm font-medium">
+                        {playgroundResult ? `${playgroundResult.latencyMs}ms` : "—"}
+                      </div>
+                      <div className="mt-0.5 text-2xs text-muted-foreground/70">Latency</div>
+                    </div>
+                    <div className="rounded-md bg-secondary p-2 text-center">
+                      <div className="font-mono text-sm font-medium">
+                        {playgroundResult?.inputTokens ?? "—"}
+                      </div>
+                      <div className="mt-0.5 text-2xs text-muted-foreground/70">Input tokens</div>
+                    </div>
+                    <div className="rounded-md bg-secondary p-2 text-center">
+                      <div className="font-mono text-sm font-medium">
+                        {playgroundResult?.outputTokens ?? "—"}
+                      </div>
+                      <div className="mt-0.5 text-2xs text-muted-foreground/70">Output tokens</div>
+                    </div>
+                    <div className="rounded-md bg-secondary p-2 text-center">
+                      <div className="font-mono text-sm font-medium">—</div>
+                      <div className="mt-0.5 text-2xs text-muted-foreground/70">Cost</div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </section>
         ) : null}
       </div>
     </div>
