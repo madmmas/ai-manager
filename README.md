@@ -34,7 +34,7 @@ Static UI reference mockups live under [`mock/`](mock/) (including brand icons i
 | **User Manager** | 5176 | User management                |
 | **Usages Data**  | 5177 | Usage analytics / data         |
 
-Each remote is meant to work **standalone** (its own Vite port) and as a **federated module** inside the dashboard. CSS strategy: per-remote Tailwind/`@repo/ui` pipeline in `main.tsx` + dashboard `content` scan for federated utility classes (see `.cursor/rules/module-federation.mdc`). **prompt-manager** ([#108](https://github.com/madmmas/aiplane/issues/108)), **guardrail** ([#109](https://github.com/madmmas/aiplane/issues/109)), and **user-manager** ([#110](https://github.com/madmmas/aiplane/issues/110)) are wired; **usages-data** still tracked in [#107](https://github.com/madmmas/aiplane/issues/107) / [#111](https://github.com/madmmas/aiplane/issues/111).
+Each remote is meant to work **standalone** (its own Vite port) and as a **federated module** inside the dashboard. CSS strategy: per-remote Tailwind/`@repo/ui` pipeline in `main.tsx` + dashboard `content` scan for federated utility classes (see `.cursor/rules/module-federation.mdc`). All remotes are wired ([#108](https://github.com/madmmas/aiplane/issues/108)–[#111](https://github.com/madmmas/aiplane/issues/111)); parent [#107](https://github.com/madmmas/aiplane/issues/107).
 
 ## Prerequisites
 

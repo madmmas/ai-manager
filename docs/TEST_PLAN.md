@@ -139,7 +139,7 @@ This is the highest-priority k6 work in the whole plan — the reactive rewrite'
 
   Run `usage-ingest-load.js` against both the old (blocking, monolith) and new (WebFlux/R2DBC) implementations if both are reachable during the transition — the comparison is the actual deliverable for the go/no-go call, not the absolute numbers.
 - **SDET B**: `usage.spec.ts` — Playwright API tests against the reactive service; note `WebTestClient`-style async behavior does not change anything from the *client's* perspective, so the Playwright spec itself does not need special handling, but do add a test for the batched-envelope validation behavior (`{"events": [...]}`, all-or-nothing rejection) since that is easy to regress silently.
-- **SDET A**: `usages-data.spec.ts` — KPI tiles and the Recharts time-series render correctly against seeded multi-day usage data.
+- **SDET A**: `usages-data.spec.ts` — KPI tiles and the daily-calls chart render correctly against seeded multi-day usage data.
 - **SDET B**: `usage_events` data-migration checklist (§10.4) run the same way as Phase 1's; if Flyway does not run cleanly against the reactive (R2DBC) datasource, note the workaround explicitly in `tests/db/migration-checklist.md` rather than solving it silently — the next service to hit this should not have to rediscover it.
 - **DoD**: k6 comparison numbers documented (old vs new implementation) and attached to the Phase 2 issue before it is marked done; `usage.spec.ts`, `usages-data.spec.ts`, and the usage schema migration checklist green.
 

@@ -12,5 +12,6 @@ export default {
     "../prompt-manager/src/**/*.{ts,tsx}",
     "../guardrail/src/**/*.{ts,tsx}",
     "../user-manager/src/**/*.{ts,tsx}",
+    "../usages-data/src/**/*.{ts,tsx}",
   ],
 } satisfies Config;

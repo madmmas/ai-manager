@@ -28,6 +28,13 @@ reverse-engineer from git history.
 
 ---
 
+## 2026-07-26 — usages-data CSS dual-mode + Usage overview UI (#111)
+
+Copied the #108–#110 pattern for `@repo/usages-data`: per-remote Tailwind/PostCSS +
+`tokens.css`/`index.css` in `main.tsx`, dark `index.html` + fonts, dashboard `content`
+scan. Usage page aligned to the mock (KPI row, daily-calls bars, top-prompts table,
+Export CSV) with admin-dashboard-style metric chips and provider breakdown retained.
+
 ## 2026-07-26 — user-manager CSS dual-mode + Users/API Keys UI (#110)
 
 Copied the #108/#109 pattern for `@repo/user-manager`: per-remote Tailwind/PostCSS +
