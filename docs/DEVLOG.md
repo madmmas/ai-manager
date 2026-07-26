@@ -28,6 +28,23 @@ reverse-engineer from git history.
 
 ---
 
+## 2026-07-26 — prompt-manager CSS dual-mode (#108)
+
+Chose **per-remote Tailwind pipeline + host content scan** for MFE styles (option 1 in
+[#107](https://github.com/madmmas/aiplane/issues/107)):
+
+- Standalone: `apps/prompt-manager` gets `tailwind.config.ts` (preset `@repo/ui`),
+  `postcss.config.js`, `src/index.css`, and `main.tsx` imports `@repo/ui/tokens.css` +
+  `./index.css`. `index.html` uses `class="dark"` + Inter / JetBrains Mono like the host.
+- Federated: do **not** import global CSS from the exposed `./App` (avoids double tokens /
+  Tailwind when mounted in the dashboard). Instead extend dashboard `tailwind.config.ts`
+  `content` with `../prompt-manager/src/**/*.{ts,tsx}` so the host stylesheet already
+  contains remote utility classes.
+
+Rejected shipping a remote CSS chunk from `./App` for this first remote — host already
+loads tokens, and a second inject was the failure mode called out in the AC. Sibling remotes
+(#109–#111) should copy this pattern and append their `content` globs on the host.
+
 ## 2026-07-26 — Track MFE CSS dual-mode (#107–#111)
 
 Remotes load as standalone Vite apps and as federated remotes, but only the dashboard

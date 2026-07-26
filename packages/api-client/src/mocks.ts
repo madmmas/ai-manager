@@ -248,6 +248,12 @@ const INITIAL_PROMPT_VERSIONS: PromptVersion[] = [
     status: "active",
     createdBy: "dev@aiplane.local",
     createdAt: "2026-07-01T14:30:00.000Z",
+    metrics: {
+      requestCount: 14200,
+      avgLatencyMs: 124,
+      errorRate: 0.003,
+      avgCostUsd: 0.0003,
+    },
   },
   {
     id: "ver_7",
@@ -290,6 +296,12 @@ const INITIAL_PROMPT_VERSIONS: PromptVersion[] = [
     status: "active",
     createdBy: "dev@aiplane.local",
     createdAt: "2026-06-20T08:15:00.000Z",
+    metrics: {
+      requestCount: 6400,
+      avgLatencyMs: 890,
+      errorRate: 0.01,
+      avgCostUsd: 0.0018,
+    },
   },
   {
     id: "ver_ack_1",
