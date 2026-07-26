@@ -87,7 +87,9 @@ Compose files: `docker-compose.yml` (base stack) + `docker-compose.dev.yml` (loc
 
 ### Development (all apps)
 
-Starts every app in dev mode. The dashboard (host) and remotes must all be running for federation to work.
+Starts the dashboard host in Vite **dev** and each remote as **build + preview** (so
+`/assets/remoteEntry.js` exists — required by `@originjs/vite-plugin-federation`; plain
+`vite` on a remote does not emit it). Ports are strict so remotes never drift.
 
 ```bash
 pnpm dev
@@ -100,6 +102,12 @@ Then open:
 - Guardrail: http://localhost:5175  
 - User Manager: http://localhost:5176  
 - Usages Data: http://localhost:5177  
+
+For HMR-only UI work on one remote **without** federation, use `dev:standalone`:
+
+```bash
+pnpm --filter @repo/prompt-manager dev:standalone
+```
 
 ### Build
 
@@ -168,7 +176,7 @@ Or from the app directory:
 cd apps/dashboard && pnpm dev
 ```
 
-Note: For full micro-frontend behavior, run `pnpm dev` at the root so host and remotes are all up. Single-app filters are useful for standalone remote work once CSS dual-mode (#107–#111) is in place.
+Note: For full micro-frontend behavior, run `pnpm dev` at the root so the host and remotes are all up (remotes serve `remoteEntry.js` via preview). Use `dev:standalone` on a remote for Vite HMR without federation.
 
 ## Project structure
 

@@ -50,7 +50,7 @@ export function RemoteLoader({ remoteName, children, className }: RemoteLoaderPr
   const [resetKey, setResetKey] = useState(0);
 
   return (
-    <div className={cn("min-h-0 flex-1", className)}>
+    <div className={cn("flex h-full min-h-0 flex-1 flex-col", className)}>
       <RemoteErrorBoundary
         key={resetKey}
         remoteName={remoteName}

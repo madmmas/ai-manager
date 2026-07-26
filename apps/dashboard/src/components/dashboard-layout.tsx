@@ -157,7 +157,9 @@ export function DashboardLayout({
           </>
         ) : null}
 
-        <main className="min-w-0 flex-1 overflow-auto bg-code-bg p-4 md:p-6">{children}</main>
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-code-bg">
+          <div className="flex min-h-0 flex-1 flex-col overflow-auto p-4 md:p-6">{children}</div>
+        </main>
       </div>
     </div>
   );

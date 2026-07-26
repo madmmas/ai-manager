@@ -31,13 +31,18 @@ export default defineConfig({
   },
   server: {
     port: 5177,
+    strictPort: true,
     cors: true,
   },
   preview: {
     port: 5177,
+    strictPort: true,
     cors: true,
   },
   build: {
     target: "esnext",
+    modulePreload: false,
+    cssCodeSplit: false,
+    minify: false,
   },
 });
