@@ -28,6 +28,17 @@ reverse-engineer from git history.
 
 ---
 
+## 2026-07-26 — Track MFE CSS dual-mode (#107–#111)
+
+Remotes load as standalone Vite apps and as federated remotes, but only the dashboard
+host imports `@repo/ui/tokens.css` + Tailwind — remote UIs render unstyled in both modes.
+Filed parent [#107](https://github.com/madmmas/aiplane/issues/107) and per-app sub-issues
+[#108](https://github.com/madmmas/aiplane/issues/108)–[#111](https://github.com/madmmas/aiplane/issues/111)
+(prompt-manager, guardrail, user-manager, usages-data). Spec §5 / §10 / §12 and
+`ISSUE_WORKFLOW.md` now treat dual-mode CSS as current frontend hygiene ahead of Phase 6.
+
+---
+
 ## 2026-07-25 — Docs sync after Phases 0–5
 
 Aligned tracker/SPEC/READMEs with shipped code: Phase 0 issues #8–#13 marked Done,
