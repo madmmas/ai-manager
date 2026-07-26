@@ -1097,7 +1097,7 @@ Complete via epic [#17](https://github.com/madmmas/aiplane/issues/17) (sub-issue
 ### Frontend hygiene — MFE standalone + federated CSS
 Tracked in epic [#107](https://github.com/madmmas/aiplane/issues/107):
 
-- [ ] prompt-manager Tailwind / `@repo/ui` CSS (standalone + federated) — [#108](https://github.com/madmmas/aiplane/issues/108)
+- [x] prompt-manager Tailwind / `@repo/ui` CSS (standalone + federated) — [#108](https://github.com/madmmas/aiplane/issues/108)
 - [ ] guardrail Tailwind / `@repo/ui` CSS (standalone + federated) — [#109](https://github.com/madmmas/aiplane/issues/109)
 - [ ] user-manager Tailwind / `@repo/ui` CSS (standalone + federated) — [#110](https://github.com/madmmas/aiplane/issues/110)
 - [ ] usages-data Tailwind / `@repo/ui` CSS (standalone + federated) — [#111](https://github.com/madmmas/aiplane/issues/111)
@@ -1148,7 +1148,7 @@ Every MFE (`dashboard`, `prompt-manager`, `guardrail`, `user-manager`, `usages-d
 
 ### Tailwind Configuration
 
-Custom tokens extend the default Tailwind palette. All MFEs share the same Tailwind preset via `packages/ui`. **Known gap:** only the dashboard host currently wires `tokens.css` / `@tailwind` entrypoints; remotes open but render unstyled until [#107](https://github.com/madmmas/aiplane/issues/107)–[#111](https://github.com/madmmas/aiplane/issues/111) land. Target: each remote has its own Tailwind pipeline (preset from `@repo/ui`) so standalone and federated modes both get styles.
+Custom tokens extend the default Tailwind palette. All MFEs share the same Tailwind preset via `packages/ui`. **Per-remote pipeline:** each remote owns Tailwind/PostCSS + `tokens.css` / `@tailwind` in `main.tsx` for standalone; the dashboard host `content` scan includes remote `src` so federated mounts reuse the host stylesheet (no second global CSS from `./App`). **prompt-manager** is wired ([#108](https://github.com/madmmas/aiplane/issues/108)); siblings still pending ([#109](https://github.com/madmmas/aiplane/issues/109)–[#111](https://github.com/madmmas/aiplane/issues/111)).
 
 ```typescript
 // packages/ui/tailwind.config.ts

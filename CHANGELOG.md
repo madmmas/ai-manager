@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Prompt Manager standalone + federated styling: Tailwind/PostCSS pipeline with `@repo/ui` tokens, dark default + fonts on `:5174`, and dashboard `content` scan so the federated route stays styled without a second global CSS inject (#108)
+
 ### Added
 
 - News Radar Config Server integration reference: `docs/integrations/news-radar-config-server.md` plus `examples/news-radar-config/` (stdlib Go `GET` client, `demo.sh` curl smoke) for promote → JDBC → Environment JSON round-trip (#66)

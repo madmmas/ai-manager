@@ -48,7 +48,7 @@ This document describes how to implement the open-source roadmap for **AIPlane**
 | [#65](https://github.com/madmmas/aiplane/issues/65) | Refresh endpoint proxied via API Server | `feat/phase-5-refresh-endpoint` | Phase 5 | Done ([#95](https://github.com/madmmas/aiplane/pull/95)) |
 | [#66](https://github.com/madmmas/aiplane/issues/66) | News Radar demo consuming Config Server | `feat/phase-5-news-radar-demo` | Phase 5 | Done ([#96](https://github.com/madmmas/aiplane/pull/96)) |
 | [#107](https://github.com/madmmas/aiplane/issues/107) | Wire CSS/Tailwind so remotes work standalone and federated | `fix/mfe-standalone-and-federated-css` | Hygiene | Open (via [#108](https://github.com/madmmas/aiplane/issues/108)–[#111](https://github.com/madmmas/aiplane/issues/111)) |
-| [#108](https://github.com/madmmas/aiplane/issues/108) | prompt-manager standalone + federated CSS/Tailwind | `fix/prompt-manager-standalone-federated-css` | Hygiene | Open |
+| [#108](https://github.com/madmmas/aiplane/issues/108) | prompt-manager standalone + federated CSS/Tailwind | `fix/prompt-manager-standalone-federated-css` | Hygiene | Done |
 | [#109](https://github.com/madmmas/aiplane/issues/109) | guardrail standalone + federated CSS/Tailwind | `fix/guardrail-standalone-federated-css` | Hygiene | Open |
 | [#110](https://github.com/madmmas/aiplane/issues/110) | user-manager standalone + federated CSS/Tailwind | `fix/user-manager-standalone-federated-css` | Hygiene | Open |
 | [#111](https://github.com/madmmas/aiplane/issues/111) | usages-data standalone + federated CSS/Tailwind | `fix/usages-data-standalone-federated-css` | Hygiene | Open |
