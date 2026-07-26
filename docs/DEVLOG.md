@@ -28,6 +28,14 @@ reverse-engineer from git history.
 
 ---
 
+## 2026-07-26 — user-manager CSS dual-mode + Users/API Keys UI (#110)
+
+Copied the #108/#109 pattern for `@repo/user-manager`: per-remote Tailwind/PostCSS +
+`tokens.css`/`index.css` in `main.tsx`, dark `index.html` + fonts, dashboard `content`
+scan. Users / API Keys tabs follow the mock headers and admin-dashboard CRM table
+patterns (search, invite/create panels, avatar initials, role/status badges, show-once
+secret, revoke).
+
 ## 2026-07-26 — guardrail CSS dual-mode + mock list UI (#109)
 
 Copied the #108 pattern for `@repo/guardrail`: per-remote Tailwind/PostCSS +

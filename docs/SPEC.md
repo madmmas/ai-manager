@@ -1099,7 +1099,7 @@ Tracked in epic [#107](https://github.com/madmmas/aiplane/issues/107):
 
 - [x] prompt-manager Tailwind / `@repo/ui` CSS (standalone + federated) — [#108](https://github.com/madmmas/aiplane/issues/108)
 - [x] guardrail Tailwind / `@repo/ui` CSS (standalone + federated) — [#109](https://github.com/madmmas/aiplane/issues/109)
-- [ ] user-manager Tailwind / `@repo/ui` CSS (standalone + federated) — [#110](https://github.com/madmmas/aiplane/issues/110)
+- [x] user-manager Tailwind / `@repo/ui` CSS (standalone + federated) — [#110](https://github.com/madmmas/aiplane/issues/110)
 - [ ] usages-data Tailwind / `@repo/ui` CSS (standalone + federated) — [#111](https://github.com/madmmas/aiplane/issues/111)
 - [ ] Document dual-mode + CSS convention in module-federation rules / README
 
@@ -1148,7 +1148,7 @@ Every MFE (`dashboard`, `prompt-manager`, `guardrail`, `user-manager`, `usages-d
 
 ### Tailwind Configuration
 
-Custom tokens extend the default Tailwind palette. All MFEs share the same Tailwind preset via `packages/ui`. **Per-remote pipeline:** each remote owns Tailwind/PostCSS + `tokens.css` / `@tailwind` in `main.tsx` for standalone; the dashboard host `content` scan includes remote `src` so federated mounts reuse the host stylesheet (no second global CSS from `./App`). **prompt-manager** ([#108](https://github.com/madmmas/aiplane/issues/108)) and **guardrail** ([#109](https://github.com/madmmas/aiplane/issues/109)) are wired; siblings still pending ([#110](https://github.com/madmmas/aiplane/issues/110)–[#111](https://github.com/madmmas/aiplane/issues/111)).
+Custom tokens extend the default Tailwind palette. All MFEs share the same Tailwind preset via `packages/ui`. **Per-remote pipeline:** each remote owns Tailwind/PostCSS + `tokens.css` / `@tailwind` in `main.tsx` for standalone; the dashboard host `content` scan includes remote `src` so federated mounts reuse the host stylesheet (no second global CSS from `./App`). **prompt-manager** ([#108](https://github.com/madmmas/aiplane/issues/108)), **guardrail** ([#109](https://github.com/madmmas/aiplane/issues/109)), and **user-manager** ([#110](https://github.com/madmmas/aiplane/issues/110)) are wired; **usages-data** still pending ([#111](https://github.com/madmmas/aiplane/issues/111)).
 
 ```typescript
 // packages/ui/tailwind.config.ts

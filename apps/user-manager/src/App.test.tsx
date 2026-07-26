@@ -25,21 +25,19 @@ describe("User Manager App", () => {
     resetApiKeyMocks();
   });
 
-  it("renders Users and API keys section headings", async () => {
+  it("renders Users tab with invite and list", async () => {
     render(
       <Wrapper>
         <App />
       </Wrapper>,
     );
 
-    expect(screen.getByRole("heading", { name: "User Manager" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Users" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("heading", { name: "Users" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Invite user" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "API keys" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Create API key" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Invite user" })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search users…")).toBeInTheDocument();
 
     expect(await screen.findByText("admin@aiplane.local")).toBeInTheDocument();
-    expect(await screen.findByText("news-radar-ingest")).toBeInTheDocument();
   });
 
   it("invites a user and adds them to the list", async () => {
@@ -52,18 +50,17 @@ describe("User Manager App", () => {
 
     expect(await screen.findByText("admin@aiplane.local")).toBeInTheDocument();
 
+    await user.click(screen.getByRole("button", { name: "Invite user" }));
     await user.type(screen.getByPlaceholderText("dev@example.com"), "new.dev@example.com");
     await user.type(screen.getByPlaceholderText("Optional display name"), "New Dev");
-    await user.click(screen.getByRole("button", { name: "Invite user" }));
 
-    const usersHeading = screen.getByRole("heading", { name: "Users" });
-    const usersSection = usersHeading.closest("section");
-    expect(usersSection).not.toBeNull();
-    expect(
-      await within(usersSection as HTMLElement).findByText("new.dev@example.com"),
-    ).toBeInTheDocument();
-    expect(within(usersSection as HTMLElement).getByText("New Dev")).toBeInTheDocument();
-    expect(within(usersSection as HTMLElement).getByText("invited")).toBeInTheDocument();
+    const form = screen.getByRole("form", { name: "Invite user" });
+    await user.click(within(form).getByRole("button", { name: "Invite user" }));
+
+    const list = screen.getByRole("list", { name: "User list" });
+    expect(await within(list).findByText("new.dev@example.com")).toBeInTheDocument();
+    expect(within(list).getByText("New Dev")).toBeInTheDocument();
+    expect(within(list).getByText("invited")).toBeInTheDocument();
   });
 
   it("creates an API key showing the secret once and revokes from the list", async () => {
@@ -76,10 +73,13 @@ describe("User Manager App", () => {
       </Wrapper>,
     );
 
+    await user.click(screen.getByRole("tab", { name: "API Keys" }));
     expect(await screen.findByText("news-radar-ingest")).toBeInTheDocument();
 
+    await user.click(screen.getByRole("button", { name: "New key" }));
     await user.type(screen.getByPlaceholderText("ci-ingest"), "ui-test-key");
-    await user.click(screen.getByRole("button", { name: "Create API key" }));
+    const createForm = screen.getByRole("form", { name: "Create API key" });
+    await user.click(within(createForm).getByRole("button", { name: "Create API key" }));
 
     const secret = await screen.findByLabelText("API key secret");
     expect(secret).toHaveTextContent(/^aimg_/);
@@ -92,12 +92,10 @@ describe("User Manager App", () => {
     await user.click(screen.getByRole("button", { name: "Done — I copied the key" }));
     expect(screen.queryByLabelText("API key secret")).not.toBeInTheDocument();
 
-    const revokeButtons = within(list).getAllByRole("button", { name: "Revoke" });
     const uiKeyRow = within(list).getByText("ui-test-key").closest("li");
     expect(uiKeyRow).not.toBeNull();
     await user.click(within(uiKeyRow as HTMLElement).getByRole("button", { name: "Revoke" }));
 
     expect(within(list).queryByText("ui-test-key")).not.toBeInTheDocument();
-    expect(revokeButtons.length).toBeGreaterThan(0);
   });
 });
