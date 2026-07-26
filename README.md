@@ -34,6 +34,8 @@ Static UI reference mockups live under [`mock/`](mock/) (including brand icons i
 | **User Manager** | 5176 | User management                |
 | **Usages Data**  | 5177 | Usage analytics / data         |
 
+Each remote is meant to work **standalone** (its own Vite port) and as a **federated module** inside the dashboard. CSS/Tailwind wiring for that dual mode is tracked in [#107](https://github.com/madmmas/aiplane/issues/107) ([#108](https://github.com/madmmas/aiplane/issues/108)–[#111](https://github.com/madmmas/aiplane/issues/111)); until those land, remotes may render unstyled when opened directly.
+
 ## Prerequisites
 
 - **Node.js** ≥ 18 (see [`.nvmrc`](.nvmrc) for recommended version)
@@ -166,7 +168,7 @@ Or from the app directory:
 cd apps/dashboard && pnpm dev
 ```
 
-Note: For full micro-frontend behavior, run `pnpm dev` at the root so host and remotes are all up.
+Note: For full micro-frontend behavior, run `pnpm dev` at the root so host and remotes are all up. Single-app filters are useful for standalone remote work once CSS dual-mode (#107–#111) is in place.
 
 ## Project structure
 

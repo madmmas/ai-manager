@@ -24,8 +24,13 @@ alwaysApply: false
   - guardrail: 5175
   - user-manager: 5176
   - usages-data: 5177
+- **Dual mode:** every remote must work as a standalone Vite app on its port and as a
+  federated remote in the dashboard. CSS/Tailwind must be wired for both modes (per-remote
+  pipeline using `@repo/ui` tokens/preset) — tracked in #107–#111. Don't assume the host's
+  stylesheet covers remote utility classes.
 - Be cautious with global/shared state across federation boundaries — each remote is
   a separately bundled app and can't assume in-memory state from another remote.
 - When scaffolding a new remote app, mirror the existing `vite.config.ts` federation
-  block (name, exposes, shared react/react-dom singletons) and wire it into the
-  dashboard's `remotes` map before considering the app "integrated."
+  block (name, exposes, shared react/react-dom singletons), wire it into the
+  dashboard's `remotes` map, and include the same Tailwind / `@repo/ui` CSS entrypoints
+  as sibling remotes before considering the app "integrated."

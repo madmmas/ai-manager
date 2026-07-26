@@ -47,8 +47,13 @@ This document describes how to implement the open-source roadmap for **AIPlane**
 | [#64](https://github.com/madmmas/aiplane/issues/64) | PromptConfigExporter on version promotion | `feat/phase-5-prompt-config-exporter` | Phase 5 | Done ([#94](https://github.com/madmmas/aiplane/pull/94)) |
 | [#65](https://github.com/madmmas/aiplane/issues/65) | Refresh endpoint proxied via API Server | `feat/phase-5-refresh-endpoint` | Phase 5 | Done ([#95](https://github.com/madmmas/aiplane/pull/95)) |
 | [#66](https://github.com/madmmas/aiplane/issues/66) | News Radar demo consuming Config Server | `feat/phase-5-news-radar-demo` | Phase 5 | Done ([#96](https://github.com/madmmas/aiplane/pull/96)) |
+| [#107](https://github.com/madmmas/aiplane/issues/107) | Wire CSS/Tailwind so remotes work standalone and federated | `fix/mfe-standalone-and-federated-css` | Hygiene | Open (via [#108](https://github.com/madmmas/aiplane/issues/108)–[#111](https://github.com/madmmas/aiplane/issues/111)) |
+| [#108](https://github.com/madmmas/aiplane/issues/108) | prompt-manager standalone + federated CSS/Tailwind | `fix/prompt-manager-standalone-federated-css` | Hygiene | Open |
+| [#109](https://github.com/madmmas/aiplane/issues/109) | guardrail standalone + federated CSS/Tailwind | `fix/guardrail-standalone-federated-css` | Hygiene | Open |
+| [#110](https://github.com/madmmas/aiplane/issues/110) | user-manager standalone + federated CSS/Tailwind | `fix/user-manager-standalone-federated-css` | Hygiene | Open |
+| [#111](https://github.com/madmmas/aiplane/issues/111) | usages-data standalone + federated CSS/Tailwind | `fix/usages-data-standalone-federated-css` | Hygiene | Open |
 
-**Phase 0–5 complete** (#8–#13 foundation, #50–#53, #54–#56, #57–#59, #60–#62, #63–#66). Next up: Phase 6 Advanced (PII / LLM-judge guardrails, playground compare, CSV export, CI prompt deploy), or host shell work to wire real cookie auth + live API (dashboard still defaults to `useMocks: true`).
+**Phase 0–5 complete** (#8–#13 foundation, #50–#53, #54–#56, #57–#59, #60–#62, #63–#66). **Next up (frontend hygiene):** [#107](https://github.com/madmmas/aiplane/issues/107) — wire CSS/Tailwind so each remote works as a standalone app and as a federated remote (sub-issues [#108](https://github.com/madmmas/aiplane/issues/108)–[#111](https://github.com/madmmas/aiplane/issues/111)). Also available: Phase 6 Advanced (PII / LLM-judge guardrails, playground compare, CSV export, CI prompt deploy), or host shell work to wire real cookie auth + live API (dashboard still defaults to `useMocks: true`).
 
 ---
 
@@ -71,6 +76,7 @@ flowchart TD
   P3["#15 Phase 3 Usage"]
   P4["#16 Phase 4 Users"]
   P5["#17 Phase 5 Config Server"]
+  MFE_CSS["#107 MFE CSS dual-mode\n#108–#111"]
 
   OSS --> SPEC
   SPEC --> REBRAND
@@ -91,6 +97,8 @@ flowchart TD
   P2 --> P3
   P3 --> P4
   P4 --> P5
+  UI --> MFE_CSS
+  P5 --> MFE_CSS
 ```
 
 **Parallel tracks after #7 merges:**
@@ -98,6 +106,7 @@ flowchart TD
 - **Docs track:** #4 → #5 → #6
 - **Frontend track:** #8 → #9 → #10 (can start #8 in parallel with docs)
 - **Backend track:** #13 → #11 → #12 (independent of frontend until Phase 1)
+- **MFE CSS hygiene (current):** #107 parent → #108 / #109 / #110 / #111 in parallel (shared CSS strategy; one PR per remote preferred)
 
 ---
 
@@ -439,9 +448,10 @@ aiplane/
 ## Tips
 
 - **One PR per issue** keeps reviews small and CI fast
-- **Phases 0–5 are merged** — foundation through Config Server; next product work is Phase 6 or shell/auth polish
+- **Phases 0–5 are merged** — foundation through Config Server; next frontend hygiene is MFE CSS dual-mode (#107–#111), then Phase 6 or shell/auth polish
 - **Do not commit `mock/files 2/`** — duplicate copies; use `mock/icons/` only
 - **Keep dashboard UI work scoped** — host shell (#10) is separate from domain MFEs (prompt/guardrail/usage/users)
+- **Each remote must work two ways** — standalone on its Vite port and federated in the dashboard; CSS wiring is tracked in #107–#111
 - Link PRs to issues with `Closes #N` for automatic cleanup
 - Assign yourself on GitHub before starting: `gh issue edit N --add-assignee @me`
 
