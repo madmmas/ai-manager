@@ -6,14 +6,18 @@ import {
   usePromptVersions,
   usePrompts,
   useRunPlayground,
-  useUpdatePrompt,
 } from "@repo/api-client";
 import type { LLMProvider, PlaygroundRunResponse, Prompt, PromptVersion } from "@repo/types";
 import { Badge, Button, Input, cn } from "@repo/ui";
 import {
   IconArrowUpCircle,
+  IconBookmark,
+  IconChevronDown,
   IconClock,
+  IconColumns,
   IconDeviceFloppy,
+  IconFileDiff,
+  IconGitBranch,
   IconPlayerPlay,
   IconPlus,
   IconSearch,
@@ -46,6 +50,32 @@ const PROVIDER_MODELS: Record<LLMProvider, string[]> = {
   ollama: ["llama3.2"],
   gemini: ["gemini-2.0-flash"],
 };
+
+/** Rough context-window labels for the editor model chip (mock parity). */
+const MODEL_CONTEXT: Record<string, string> = {
+  "claude-sonnet-4-20250514": "200k",
+  "claude-haiku-4-20250414": "200k",
+  "gpt-4o": "128k",
+  "gpt-4o-mini": "128k",
+  "anthropic.claude-sonnet-4": "200k",
+  "llama3.2": "128k",
+  "gemini-2.0-flash": "1M",
+};
+
+function formatCalls(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10_000 ? 1 : 1).replace(/\.0$/, "")}k`;
+  return String(n);
+}
+
+function estimatePlaygroundCost(result: PlaygroundRunResponse | null): string {
+  if (!result) return "—";
+  const input = result.inputTokens ?? 0;
+  const output = result.outputTokens ?? 0;
+  if (!input && !output) return "—";
+  // Lightweight display estimate (not billed) — keeps the mock metrics column filled.
+  const usd = input * 0.00000025 + output * 0.00000125;
+  return `$${usd.toFixed(4)}`;
+}
 
 function displayTitle(name: string): string {
   const slug = name.includes("/") ? name.slice(name.lastIndexOf("/") + 1) : name;
@@ -185,7 +215,6 @@ export default function App() {
     projectId: effectiveProjectId,
   });
   const createPrompt = useCreatePrompt();
-  const updatePrompt = useUpdatePrompt();
   const createVersion = useCreatePromptVersion();
   const promoteVersion = usePromotePromptVersion();
   const runPlayground = useRunPlayground();
@@ -230,22 +259,6 @@ export default function App() {
   const [promptDescription, setPromptDescription] = useState("");
   const [promptTags, setPromptTags] = useState("");
   const [createError, setCreateError] = useState<string | null>(null);
-
-  const [editName, setEditName] = useState("");
-  const [editDescription, setEditDescription] = useState("");
-  const [editTags, setEditTags] = useState("");
-
-  useEffect(() => {
-    if (!selectedPrompt) {
-      setEditName("");
-      setEditDescription("");
-      setEditTags("");
-      return;
-    }
-    setEditName(selectedPrompt.name);
-    setEditDescription(selectedPrompt.description ?? "");
-    setEditTags(selectedPrompt.tags.join(", "));
-  }, [selectedPrompt]);
 
   const [systemPrompt, setSystemPrompt] = useState("");
   const [userPromptTemplate, setUserPromptTemplate] = useState("");
@@ -331,20 +344,6 @@ export default function App() {
     } catch (error) {
       setCreateError(error instanceof Error ? error.message : "Failed to create prompt");
     }
-  }
-
-  async function onSavePromptMeta(event: FormEvent) {
-    event.preventDefault();
-    if (!effectivePromptId) return;
-    await updatePrompt.mutateAsync({
-      id: effectivePromptId,
-      name: editName.trim(),
-      description: editDescription.trim() || undefined,
-      tags: editTags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
-    });
   }
 
   async function onSaveNewVersion() {
@@ -577,46 +576,6 @@ export default function App() {
               <p className="text-sm text-muted-foreground">Select a prompt from the Library.</p>
             ) : (
               <>
-                <form
-                  className={cn(panelClass, "grid gap-3 sm:grid-cols-3")}
-                  onSubmit={onSavePromptMeta}
-                >
-                  <label className="flex flex-col gap-1 text-sm" htmlFor="edit-prompt-name">
-                    <span className="font-medium">Name</span>
-                    <Input
-                      id="edit-prompt-name"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm" htmlFor="edit-prompt-description">
-                    <span className="font-medium">Description</span>
-                    <Input
-                      id="edit-prompt-description"
-                      value={editDescription}
-                      onChange={(e) => setEditDescription(e.target.value)}
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm" htmlFor="edit-prompt-tags">
-                    <span className="font-medium">Tags</span>
-                    <Input
-                      id="edit-prompt-tags"
-                      value={editTags}
-                      onChange={(e) => setEditTags(e.target.value)}
-                    />
-                  </label>
-                  <div className="sm:col-span-3">
-                    <Button
-                      type="submit"
-                      size="sm"
-                      variant="secondary"
-                      disabled={updatePrompt.isPending}
-                    >
-                      Save prompt details
-                    </Button>
-                  </div>
-                </form>
-
                 <div className={panelClass}>
                   <div className={labelClass}>Version history — {selectedPrompt.name}</div>
                   {loadingVersions ? (
@@ -669,18 +628,6 @@ export default function App() {
                                 <br />
                                 {formatMonthDay(version.createdAt)}
                               </span>
-                              {canPromote(version.status) ? (
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-6 px-1.5 text-2xs"
-                                  disabled={promoteVersion.isPending}
-                                  onClick={() => onPromote(version.id)}
-                                >
-                                  {promoteLabel(version.status)}
-                                </Button>
-                              ) : null}
                             </div>
                           </li>
                         );
@@ -708,6 +655,19 @@ export default function App() {
                         value={userPromptTemplate}
                         onChange={(e) => setUserPromptTemplate(e.target.value)}
                       />
+                      {variableNames.length > 0 ? (
+                        <p className="mt-2 text-2xs text-muted-foreground/70">
+                          Variables:{" "}
+                          {variableNames.map((name, i) => (
+                            <span key={name}>
+                              {i > 0 ? ", " : null}
+                              <span className="rounded-sm bg-[#2a2000] px-0.5 font-mono text-warning">
+                                {`{{${name}}}`}
+                              </span>
+                            </span>
+                          ))}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Button
@@ -715,25 +675,51 @@ export default function App() {
                         size="sm"
                         variant="outline"
                         className="h-8 text-xs"
-                        onClick={onSaveNewVersion}
-                        disabled={!effectivePromptId || createVersion.isPending}
+                        disabled
+                        title="Coming in a later phase"
                       >
-                        <IconDeviceFloppy className="size-3.5" aria-hidden />
-                        {createVersion.isPending ? "Saving…" : "Save"}
+                        <IconGitBranch className="size-3.5" aria-hidden />
+                        Fork
                       </Button>
-                      {selectedVersion && canPromote(selectedVersion.status) ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        disabled
+                        title="Coming in a later phase"
+                      >
+                        <IconFileDiff className="size-3.5" aria-hidden />
+                        Diff
+                      </Button>
+                      <div className="ml-auto flex flex-wrap items-center gap-1.5">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-xs"
+                          onClick={onSaveNewVersion}
+                          disabled={!effectivePromptId || createVersion.isPending}
+                        >
+                          <IconDeviceFloppy className="size-3.5" aria-hidden />
+                          {createVersion.isPending ? "Saving…" : "Save"}
+                        </Button>
                         <Button
                           type="button"
                           size="sm"
                           variant="secondary"
                           className="h-8 border border-input bg-secondary text-primary"
-                          disabled={promoteVersion.isPending}
-                          onClick={() => onPromote(selectedVersion.id)}
+                          disabled={
+                            !selectedVersion ||
+                            !canPromote(selectedVersion.status) ||
+                            promoteVersion.isPending
+                          }
+                          onClick={() => selectedVersion && onPromote(selectedVersion.id)}
                         >
                           <IconArrowUpCircle className="size-3.5" aria-hidden />
-                          Promote
+                          {selectedVersion ? promoteLabel(selectedVersion.status) : "Promote"}
                         </Button>
-                      ) : null}
+                      </div>
                     </div>
                     {editorError ? (
                       <p className="text-sm text-destructive" role="alert">
@@ -748,7 +734,7 @@ export default function App() {
                         <span className="size-2 shrink-0 rounded-full bg-success" aria-hidden />
                         <select
                           aria-label="Model"
-                          className="min-w-0 flex-1 bg-transparent font-mono text-xs font-medium text-foreground outline-none"
+                          className="min-w-0 flex-1 appearance-none bg-transparent font-mono text-xs font-medium text-foreground outline-none"
                           value={model}
                           onChange={(e) => setModel(e.target.value)}
                         >
@@ -761,9 +747,16 @@ export default function App() {
                             <option value={model}>{model}</option>
                           ) : null}
                         </select>
+                        <IconChevronDown
+                          className="size-3 shrink-0 text-muted-foreground/50"
+                          aria-hidden
+                        />
+                        <span className="shrink-0 font-mono text-2xs text-muted-foreground/70">
+                          {MODEL_CONTEXT[model] ?? "—"}
+                        </span>
                       </div>
                       <label className="mb-2 flex flex-col gap-1 text-sm">
-                        <span className="font-medium">Provider</span>
+                        <span className="sr-only">Provider</span>
                         <select
                           aria-label="Provider"
                           className={fieldClass}
@@ -829,37 +822,45 @@ export default function App() {
                       </div>
                     </div>
 
-                    {selectedVersion?.metrics ? (
-                      <div className={panelClass}>
-                        <div className={labelClass}>v{selectedVersion.version} metrics</div>
-                        <div className="space-y-0 divide-y divide-border/60 text-xs">
-                          <div className="flex justify-between py-1.5">
-                            <span className="text-muted-foreground">Calls</span>
-                            <span className="font-mono font-medium">
-                              {selectedVersion.metrics.requestCount.toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="flex justify-between py-1.5">
-                            <span className="text-muted-foreground">Avg latency</span>
-                            <span className="font-mono font-medium">
-                              {Math.round(selectedVersion.metrics.avgLatencyMs)}ms
-                            </span>
-                          </div>
-                          <div className="flex justify-between py-1.5">
-                            <span className="text-muted-foreground">Avg cost</span>
-                            <span className="font-mono font-medium">
-                              ${selectedVersion.metrics.avgCostUsd.toFixed(4)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between py-1.5">
-                            <span className="text-muted-foreground">Success</span>
-                            <span className="font-mono font-medium">
-                              {((1 - selectedVersion.metrics.errorRate) * 100).toFixed(1)}%
-                            </span>
-                          </div>
+                    <div className={panelClass}>
+                      <div className={labelClass}>
+                        {selectedVersion ? `v${selectedVersion.version} metrics` : "Metrics"}
+                      </div>
+                      <div className="space-y-0 divide-y divide-border/60 text-xs">
+                        <div className="flex justify-between py-1.5">
+                          <span className="text-muted-foreground">Calls</span>
+                          <span className="font-mono font-medium">
+                            {selectedVersion?.metrics
+                              ? formatCalls(selectedVersion.metrics.requestCount)
+                              : "—"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-1.5">
+                          <span className="text-muted-foreground">Avg latency</span>
+                          <span className="font-mono font-medium">
+                            {selectedVersion?.metrics
+                              ? `${Math.round(selectedVersion.metrics.avgLatencyMs)}ms`
+                              : "—"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-1.5">
+                          <span className="text-muted-foreground">Avg cost</span>
+                          <span className="font-mono font-medium">
+                            {selectedVersion?.metrics
+                              ? `$${selectedVersion.metrics.avgCostUsd.toFixed(4)}`
+                              : "—"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-1.5">
+                          <span className="text-muted-foreground">Success</span>
+                          <span className="font-mono font-medium">
+                            {selectedVersion?.metrics
+                              ? `${((1 - selectedVersion.metrics.errorRate) * 100).toFixed(1)}%`
+                              : "—"}
+                          </span>
                         </div>
                       </div>
-                    ) : null}
+                    </div>
                   </div>
                 </div>
               </>
@@ -878,12 +879,23 @@ export default function App() {
               </p>
             ) : (
               <>
-                <div className="flex items-center justify-between gap-2">
+                <div className="mb-1 flex items-center justify-between gap-2">
                   <p className="text-sm text-muted-foreground">
                     Testing{" "}
                     <strong className="font-medium text-foreground">{selectedPrompt.name}</strong>
                     {" · "}v{selectedVersion.version} ({selectedVersion.status})
                   </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    disabled
+                    title="Side-by-side compare ships in Phase 6"
+                  >
+                    <IconColumns className="size-3.5" aria-hidden />
+                    Compare
+                  </Button>
                 </div>
 
                 <div className="grid gap-2.5 lg:grid-cols-[1fr_156px]">
@@ -969,9 +981,22 @@ export default function App() {
                       <div className="mt-0.5 text-2xs text-muted-foreground/70">Output tokens</div>
                     </div>
                     <div className="rounded-md bg-secondary p-2 text-center">
-                      <div className="font-mono text-sm font-medium">—</div>
+                      <div className="font-mono text-sm font-medium">
+                        {estimatePlaygroundCost(playgroundResult)}
+                      </div>
                       <div className="mt-0.5 text-2xs text-muted-foreground/70">Cost</div>
                     </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="mt-0.5 h-7 w-full text-xs"
+                      disabled
+                      title="Save test ships with playground compare (Phase 6)"
+                    >
+                      <IconBookmark className="size-3.5" aria-hidden />
+                      Save test
+                    </Button>
                   </div>
                 </div>
               </>

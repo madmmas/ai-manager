@@ -59,7 +59,7 @@ describe("Prompt Manager App", () => {
       "aria-selected",
       "true",
     );
-    expect(screen.getByDisplayValue("news-radar/ui-new-prompt")).toBeInTheDocument();
+    expect(screen.getByText(/Version history — news-radar\/ui-new-prompt/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "Library" }));
     const list = screen.getByRole("list", { name: "Prompt list" });
@@ -80,11 +80,13 @@ describe("Prompt Manager App", () => {
 
     const timeline = await screen.findByLabelText("Prompt versions");
     expect(within(timeline).getByText(/draft/i)).toBeInTheDocument();
-    expect(
-      within(timeline).getByRole("button", { name: "Promote to testing" }),
-    ).toBeInTheDocument();
+
+    await user.click(within(timeline).getByRole("button", { name: "Select version 8" }));
+    expect(screen.getByRole("button", { name: "Promote to testing" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "Playground" }));
+    expect(screen.getByRole("button", { name: "Compare" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save test" })).toBeInTheDocument();
     await user.type(await screen.findByLabelText("Variable headline_a"), "Alpha headline");
     await user.type(screen.getByLabelText("Variable headline_b"), "Beta headline");
     await user.click(screen.getByRole("button", { name: /Run/i }));
