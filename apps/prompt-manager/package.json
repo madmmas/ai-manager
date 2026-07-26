@@ -5,9 +5,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 5174",
+    "dev": "vite build && pnpm exec concurrently -k -n build,preview \"vite build --watch\" \"vite preview --port 5174 --strictPort\"",
+    "dev:standalone": "vite --port 5174 --strictPort",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --port 5174",
+    "preview": "vite preview --port 5174 --strictPort",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "test": "vitest run",

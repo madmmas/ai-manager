@@ -1101,7 +1101,8 @@ Tracked in epic [#107](https://github.com/madmmas/aiplane/issues/107):
 - [x] guardrail Tailwind / `@repo/ui` CSS (standalone + federated) — [#109](https://github.com/madmmas/aiplane/issues/109)
 - [x] user-manager Tailwind / `@repo/ui` CSS (standalone + federated) — [#110](https://github.com/madmmas/aiplane/issues/110)
 - [x] usages-data Tailwind / `@repo/ui` CSS (standalone + federated) — [#111](https://github.com/madmmas/aiplane/issues/111)
-- [ ] Document dual-mode + CSS convention in module-federation rules / README
+- [x] Document dual-mode + CSS convention in module-federation rules / README
+- [x] Host federation: remotes emit/serve `remoteEntry.js` in `pnpm dev` (build-watch + preview) — [#107](https://github.com/madmmas/aiplane/issues/107)
 
 ---
 

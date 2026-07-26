@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Dashboard federation in `pnpm dev`: remotes build-watch + preview so `/assets/remoteEntry.js` exists; strict ports; host content area flex layout for federated mounts (#107)
 - Usages Data standalone + federated styling: Tailwind/PostCSS with `@repo/ui` tokens on `:5177`, dashboard `content` scan, and mock-aligned Usage overview (KPI row, daily-calls bars, top-prompts table, Export CSV) (#111)
 - User Manager standalone + federated styling: Tailwind/PostCSS with `@repo/ui` tokens on `:5176`, dashboard `content` scan, and Users / API Keys UI (tabs, search, invite/create, CRM-style rows) (#110)
 - Guardrail standalone + federated styling: Tailwind/PostCSS with `@repo/ui` tokens on `:5175`, dashboard `content` scan, and mock-aligned rule list (search, badges, toggles) (#109)

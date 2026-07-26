@@ -28,6 +28,14 @@ reverse-engineer from git history.
 
 ---
 
+## 2026-07-26 — Host federation: remotes serve remoteEntry in `pnpm dev` (#107)
+
+Remotes worked standalone on plain Vite, but the dashboard hung on "Loading …"
+because `@originjs/vite-plugin-federation` only emits `/assets/remoteEntry.js` on
+**build**. Remote `dev` now runs initial `vite build` + `vite build --watch` +
+`vite preview --strictPort`; host stays on Vite. Added `dev:standalone` for HMR-only
+UI work. Host main/RemoteLoader flex layout so federated remotes fill the shell.
+
 ## 2026-07-26 — usages-data CSS dual-mode + Usage overview UI (#111)
 
 Copied the #108–#110 pattern for `@repo/usages-data`: per-remote Tailwind/PostCSS +
