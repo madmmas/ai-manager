@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- OpenAPI 3 + Swagger UI on `api-server` via springdoc (`/v3/api-docs`, `/swagger-ui`), with API key / bearer security schemes and public access to the docs endpoints (#123)
 - News Radar Config Server integration reference: `docs/integrations/news-radar-config-server.md` plus `examples/news-radar-config/` (stdlib Go `GET` client, `demo.sh` curl smoke) for promote → JDBC → Environment JSON round-trip (#66)
 - Config Server refresh/environment proxy: `POST /api/v1/config/refresh/{application}` → Config Server `/actuator/refresh`, optional `GET /api/v1/config/{application}/{profile}`; API key scopes `config:refresh` / `config:read` (JWT ADMIN/DEVELOPER allowed); unreachable Config Server → 502; MockWebServer client + auth ITs (#65)
 - `JdbcPromptConfigExporter`: on version activation, upserts active prompt fields into shared `config_properties` (project slug / `default` / `main`); idempotent via UNIQUE + `ON CONFLICT`; NoOp stub removed (#64)
@@ -38,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Spring Boot BOM bumped `3.4.5` → `3.4.13` so springdoc Swagger UI works with PathPatternParser (Spring Framework 6.2.8+) (#123)
 - Docs synced to Phases 0–5 reality: SPEC/ISSUE_WORKFLOW Phase 0 Done, cookie auth + config refresh paths, Flyway V10, api-client README no longer documents localStorage JWTs as primary
 - `api-server` now includes `spring-boot-starter-data-jpa` (`ddl-auto=validate`); project and guardrail domains remain on JdbcTemplate for now (#50)
 

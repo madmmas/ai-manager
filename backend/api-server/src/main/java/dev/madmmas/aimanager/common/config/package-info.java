@@ -1,2 +1,2 @@
-/** Application configuration beans (security, MVC, OpenAPI — filled in later issues). */
+/** Application configuration beans (security helpers, MVC, OpenAPI). */
 package dev.madmmas.aimanager.common.config;

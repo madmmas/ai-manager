@@ -61,6 +61,16 @@ aiplane:
         output-usd-per-1k: 0.0006
 
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    # Use /swagger-ui (not /swagger-ui.html) — PathPatternParser rejects
+    # combining a .html path with /** under Spring Framework 6.2 / Boot 3.4.
+    path: /swagger-ui
+    operations-sorter: method
+    tags-sorter: alpha
+
 management:
   endpoints:
     web:
