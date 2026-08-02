@@ -4,10 +4,10 @@ Spring Boot modular monolith for AIPlane (SPEC §3).
 
 | Module | Port | Role |
 |--------|------|------|
-| `api-server` | 8080 | Main API (`/actuator/health`) |
+| `api-server` | 8080 | Main API (`/actuator/health`); OpenAPI at `/v3/api-docs`, Swagger UI at `/swagger-ui` |
 | `config-server` | 8888 | Spring Cloud Config Server (`native` / `jdbc` / `git` via `CONFIG_MODE`) |
 
-**Java:** 21 · **Spring Boot:** 3.4.x · **Spring Cloud:** 2024.0.x · **Spring AI BOM:** managed in parent POM
+**Java:** 21 · **Spring Boot:** 3.4.x (≥ 3.4.7 for springdoc Swagger UI) · **Spring Cloud:** 2024.0.x · **Spring AI BOM:** managed in parent POM
 
 ## Prerequisites
 
@@ -70,6 +70,8 @@ API server (required for acceptance):
 ```bash
 make backend-api
 # → http://localhost:8080/actuator/health
+# → http://localhost:8080/swagger-ui          (OpenAPI / springdoc)
+# → http://localhost:8080/v3/api-docs         (OpenAPI JSON)
 ```
 
 Config server (optional for local scaffold; default `CONFIG_MODE=native`):
