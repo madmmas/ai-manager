@@ -74,6 +74,8 @@ make backend-api
 # → http://localhost:8080/v3/api-docs         (OpenAPI JSON)
 ```
 
+Frozen OpenAPI YAML for external consumers lives under [`docs/api/`](../docs/api/) (`make openapi` regenerates).
+
 Config server (optional for local scaffold; default `CONFIG_MODE=native`):
 
 ```bash

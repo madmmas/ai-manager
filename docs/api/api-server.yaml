@@ -1,0 +1,1390 @@
+openapi: 3.1.0
+info:
+  title: AIPlane API
+  description: "AIPlane modular monolith REST API (prompts, guardrails, users, usage,\
+    \ config). Browser sessions use httpOnly JWT cookies after `/auth/login`; programmatic\
+    \ clients use `X-API-Key` or `Authorization: Bearer aimg_…`."
+  version: v1
+servers:
+- url: http://localhost
+  description: Generated server url
+security:
+- apiKey: []
+- bearerAuth: []
+paths:
+  /auth/refresh:
+    post:
+      tags:
+      - auth-controller
+      operationId: refresh
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /auth/logout:
+    post:
+      tags:
+      - auth-controller
+      operationId: logout
+      responses:
+        "200":
+          description: OK
+  /auth/login:
+    post:
+      tags:
+      - auth-controller
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /auth/accept-invite:
+    post:
+      tags:
+      - auth-controller
+      operationId: acceptInvite
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptInviteRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /api/v1/users/invite:
+    post:
+      tags:
+      - user-controller
+      operationId: invite
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteUserRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+  /api/v1/usage/events:
+    get:
+      tags:
+      - usage-controller
+      operationId: listEvents
+      parameters:
+      - name: projectId
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: from
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UsageEventResponse"
+    post:
+      tags:
+      - usage-controller
+      operationId: ingest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsageEventIngestRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UsageEventIngestResponse"
+  /api/v1/prompts:
+    get:
+      tags:
+      - prompt-controller
+      operationId: list
+      parameters:
+      - name: projectId
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PromptResponse"
+    post:
+      tags:
+      - prompt-controller
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromptCreateRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PromptResponse"
+  /api/v1/prompts/{id}/versions:
+    get:
+      tags:
+      - prompt-controller
+      operationId: listVersions
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PromptVersionResponse"
+    post:
+      tags:
+      - prompt-controller
+      operationId: createVersion
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromptVersionCreateRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PromptVersionResponse"
+  /api/v1/prompts/{id}/versions/{vid}/promote:
+    post:
+      tags:
+      - prompt-controller
+      operationId: promoteVersion
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: vid
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PromptVersionResponse"
+  /api/v1/prompts/{id}/playground/run:
+    post:
+      tags:
+      - prompt-controller
+      operationId: runPlayground
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaygroundRunRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PlaygroundRunResponse"
+  /api/v1/guardrails:
+    get:
+      tags:
+      - guardrail-controller
+      operationId: list_1
+      parameters:
+      - name: projectId
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GuardrailResponse"
+    post:
+      tags:
+      - guardrail-controller
+      operationId: create_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuardrailCreateRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GuardrailResponse"
+  /api/v1/guardrails/{id}/test:
+    post:
+      tags:
+      - guardrail-controller
+      operationId: test
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuardrailTestRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EvaluatorResultResponse"
+  /api/v1/guardrail-sets:
+    get:
+      tags:
+      - guardrail-set-controller
+      operationId: list_2
+      parameters:
+      - name: projectId
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GuardrailSetResponse"
+    post:
+      tags:
+      - guardrail-set-controller
+      operationId: create_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuardrailSetCreateRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GuardrailSetResponse"
+  /api/v1/guardrail-sets/{id}/evaluate:
+    post:
+      tags:
+      - guardrail-set-controller
+      operationId: evaluate
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuardrailSetEvaluateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GuardrailSetEvaluateResponse"
+  /api/v1/config/refresh/{application}:
+    post:
+      tags:
+      - config-proxy-controller
+      operationId: refresh_1
+      parameters:
+      - name: application
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  type: string
+  /api/v1/api-keys:
+    get:
+      tags:
+      - api-key-controller
+      operationId: list_3
+      parameters:
+      - name: projectId
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApiKeyResponse"
+    post:
+      tags:
+      - api-key-controller
+      operationId: create_3
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateApiKeyRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiKeyCreatedResponse"
+  /api/v1/prompts/{id}:
+    get:
+      tags:
+      - prompt-controller
+      operationId: get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PromptResponse"
+    delete:
+      tags:
+      - prompt-controller
+      operationId: delete
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+    patch:
+      tags:
+      - prompt-controller
+      operationId: update
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromptUpdateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PromptResponse"
+  /api/v1/prompts/{id}/versions/{vid}/status:
+    patch:
+      tags:
+      - prompt-controller
+      operationId: updateVersionStatus
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: vid
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromptVersionStatusUpdateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PromptVersionResponse"
+  /api/v1/guardrails/{id}:
+    get:
+      tags:
+      - guardrail-controller
+      operationId: get_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GuardrailResponse"
+    delete:
+      tags:
+      - guardrail-controller
+      operationId: delete_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+    patch:
+      tags:
+      - guardrail-controller
+      operationId: update_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuardrailUpdateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GuardrailResponse"
+  /api/v1/guardrail-sets/{id}:
+    get:
+      tags:
+      - guardrail-set-controller
+      operationId: get_2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GuardrailSetResponse"
+    delete:
+      tags:
+      - guardrail-set-controller
+      operationId: delete_2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+    patch:
+      tags:
+      - guardrail-set-controller
+      operationId: update_2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuardrailSetUpdateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GuardrailSetResponse"
+  /auth/me:
+    get:
+      tags:
+      - auth-controller
+      operationId: me
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AuthUserResponse"
+  /api/v1/users:
+    get:
+      tags:
+      - user-controller
+      operationId: list_4
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserResponse"
+  /api/v1/usage/summary:
+    get:
+      tags:
+      - usage-controller
+      operationId: summary
+      parameters:
+      - name: projectId
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: period
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UsageSummaryResponse"
+  /api/v1/usage/costs/projection:
+    get:
+      tags:
+      - usage-controller
+      operationId: projection
+      parameters:
+      - name: projectId
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UsageCostProjectionResponse"
+  /api/v1/prompts/{id}/versions/{vid}:
+    get:
+      tags:
+      - prompt-controller
+      operationId: getVersion
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: vid
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PromptVersionResponse"
+  /api/v1/config/{application}/{profile}:
+    get:
+      tags:
+      - config-proxy-controller
+      operationId: getEnvironment
+      parameters:
+      - name: application
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: profile
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/JsonNode"
+  /api/v1/api-keys/{id}:
+    delete:
+      tags:
+      - api-key-controller
+      operationId: revoke
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+components:
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/AuthUserResponse"
+    AuthUserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+        password:
+          type: string
+          maxLength: 2147483647
+          minLength: 8
+      required:
+      - email
+      - password
+    AcceptInviteRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+        password:
+          type: string
+          maxLength: 2147483647
+          minLength: 8
+        name:
+          type: string
+      required:
+      - email
+      - password
+    InviteUserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+        name:
+          type: string
+        projectId:
+          type: string
+          minLength: 1
+        role:
+          type: string
+          minLength: 1
+      required:
+      - email
+      - projectId
+      - role
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+    UsageEventCreateRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        projectId:
+          type: string
+        promptId:
+          type: string
+        promptVersionId:
+          type: string
+        apiKeyId:
+          type: string
+        provider:
+          type: string
+        model:
+          type: string
+        inputTokens:
+          type: integer
+          format: int32
+        outputTokens:
+          type: integer
+          format: int32
+        latencyMs:
+          type: integer
+          format: int32
+        costUsd:
+          type: number
+        status:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    UsageEventIngestRequest:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/UsageEventCreateRequest"
+    UsageEventIngestResponse:
+      type: object
+      properties:
+        accepted:
+          type: integer
+          format: int32
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/UsageEventResponse"
+    UsageEventResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        projectId:
+          type: string
+        promptId:
+          type: string
+        promptVersionId:
+          type: string
+        apiKeyId:
+          type: string
+        provider:
+          type: string
+        model:
+          type: string
+        inputTokens:
+          type: integer
+          format: int32
+        outputTokens:
+          type: integer
+          format: int32
+        latencyMs:
+          type: integer
+          format: int32
+        costUsd:
+          type: number
+        status:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    PromptCreateRequest:
+      type: object
+      properties:
+        projectId:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+      required:
+      - name
+      - projectId
+    PromptResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        projectId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        activeVersionId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    PromptVersionCreateRequest:
+      type: object
+      properties:
+        label:
+          type: string
+        model:
+          type: string
+          minLength: 1
+        provider:
+          type: string
+          minLength: 1
+        systemPrompt:
+          type: string
+        userPromptTemplate:
+          type: string
+        parameters:
+          type: object
+          additionalProperties: {}
+        createdBy:
+          type: string
+      required:
+      - model
+      - provider
+    PromptVersionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        promptId:
+          type: string
+        version:
+          type: integer
+          format: int32
+        label:
+          type: string
+        model:
+          type: string
+        provider:
+          type: string
+        systemPrompt:
+          type: string
+        userPromptTemplate:
+          type: string
+        parameters:
+          type: object
+          additionalProperties: {}
+        status:
+          type: string
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        metrics:
+          type: object
+          additionalProperties: {}
+    PlaygroundRunRequest:
+      type: object
+      properties:
+        versionId:
+          type: string
+        variables:
+          type: object
+          additionalProperties:
+            type: string
+        provider:
+          type: string
+          minLength: 1
+        model:
+          type: string
+          minLength: 1
+        temperature:
+          type: number
+          format: double
+        maxTokens:
+          type: integer
+          format: int32
+      required:
+      - model
+      - provider
+    PlaygroundRunResponse:
+      type: object
+      properties:
+        content:
+          type: string
+        inputTokens:
+          type: integer
+          format: int32
+        outputTokens:
+          type: integer
+          format: int32
+        latencyMs:
+          type: integer
+          format: int64
+        provider:
+          type: string
+        model:
+          type: string
+        blockedByGuardrail:
+          type: boolean
+    GuardrailCreateRequest:
+      type: object
+      properties:
+        projectId:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        type:
+          type: string
+          minLength: 1
+        stage:
+          type: string
+          minLength: 1
+        config:
+          type: object
+          additionalProperties: {}
+        enabled:
+          type: boolean
+        action:
+          type: string
+          minLength: 1
+        blockMessage:
+          type: string
+      required:
+      - action
+      - name
+      - projectId
+      - stage
+      - type
+    GuardrailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        projectId:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        stage:
+          type: string
+        config:
+          type: object
+          additionalProperties: {}
+        enabled:
+          type: boolean
+        action:
+          type: string
+        blockMessage:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    GuardrailTestRequest:
+      type: object
+      properties:
+        text:
+          type: string
+          minLength: 1
+      required:
+      - text
+    EvaluatorResultResponse:
+      type: object
+      properties:
+        guardrailId:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        stage:
+          type: string
+        passed:
+          type: boolean
+        reason:
+          type: string
+        action:
+          type: string
+        matchedFragment:
+          type: string
+    GuardrailSetCreateRequest:
+      type: object
+      properties:
+        projectId:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        shortCircuitOnBlock:
+          type: boolean
+        guardrailIds:
+          type: array
+          items:
+            type: string
+      required:
+      - name
+      - projectId
+    GuardrailSetResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        projectId:
+          type: string
+        name:
+          type: string
+        shortCircuitOnBlock:
+          type: boolean
+        guardrailIds:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+    GuardrailSetEvaluateRequest:
+      type: object
+      properties:
+        input:
+          type: string
+        output:
+          type: string
+        shortCircuitOnBlock:
+          type: boolean
+    GuardrailSetEvaluateResponse:
+      type: object
+      properties:
+        blocked:
+          type: boolean
+        shortCircuited:
+          type: boolean
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/EvaluatorResultResponse"
+    CreateApiKeyRequest:
+      type: object
+      properties:
+        projectId:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        scopes:
+          type: array
+          items:
+            type: string
+          minItems: 1
+        expiresAt:
+          type: string
+          format: date-time
+      required:
+      - name
+      - projectId
+      - scopes
+    ApiKeyCreatedResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        projectId:
+          type: string
+        name:
+          type: string
+        prefix:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        key:
+          type: string
+    PromptUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+    PromptVersionStatusUpdateRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          minLength: 1
+      required:
+      - status
+    GuardrailUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        stage:
+          type: string
+        config:
+          type: object
+          additionalProperties: {}
+        enabled:
+          type: boolean
+        action:
+          type: string
+        blockMessage:
+          type: string
+    GuardrailSetUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        shortCircuitOnBlock:
+          type: boolean
+        guardrailIds:
+          type: array
+          items:
+            type: string
+    UsageProviderBreakdownResponse:
+      type: object
+      properties:
+        provider:
+          type: string
+        requests:
+          type: integer
+          format: int64
+        inputTokens:
+          type: integer
+          format: int64
+        outputTokens:
+          type: integer
+          format: int64
+        costUsd:
+          type: number
+    UsageSummaryResponse:
+      type: object
+      properties:
+        projectId:
+          type: string
+        period:
+          type: string
+        totalRequests:
+          type: integer
+          format: int64
+        totalInputTokens:
+          type: integer
+          format: int64
+        totalOutputTokens:
+          type: integer
+          format: int64
+        totalCostUsd:
+          type: number
+        byProvider:
+          type: array
+          items:
+            $ref: "#/components/schemas/UsageProviderBreakdownResponse"
+    UsageCostProjectionResponse:
+      type: object
+      properties:
+        projectId:
+          type: string
+        windowDays:
+          type: integer
+          format: int32
+        avgDailyCostUsd:
+          type: number
+        projectedMonthlyCostUsd:
+          type: number
+    JsonNode: {}
+    ApiKeyResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        projectId:
+          type: string
+        name:
+          type: string
+        prefix:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      description: API key (`aimg_…`) issued via `/api/v1/api-keys`.
+      name: X-API-Key
+      in: header
+    bearerAuth:
+      type: http
+      description: "Prefer `X-API-Key` for API keys. Bearer also accepts `aimg_…`\
+        \ keys. Browser JWT auth uses httpOnly cookies, not this header."
+      scheme: bearer
+      bearerFormat: aimg_ API key or JWT
