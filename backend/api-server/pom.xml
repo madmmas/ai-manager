@@ -166,7 +166,12 @@
           <systemPropertyVariables>
             <api.version>1.44</api.version>
             <net.bytebuddy.experimental>true</net.bytebuddy.experimental>
+            <!-- Frozen contract path for OpenApiIT (repo docs/api). -->
+            <openapi.docs.dir>${project.basedir}/../../docs/api</openapi.docs.dir>
           </systemPropertyVariables>
+          <environmentVariables>
+            <DOCKER_API_VERSION>1.44</DOCKER_API_VERSION>
+          </environmentVariables>
         </configuration>
       </plugin>
       <plugin>

@@ -3,7 +3,7 @@
 
 .PHONY: help install dev build preview lint typecheck test clean \
 	dev-dashboard dev-prompt dev-guardrail dev-user dev-usages \
-	backend-build backend-api backend-config backend-test \
+	backend-build backend-api backend-config backend-test openapi \
 	docker-up docker-down docker-logs docker-ps docker-config
 
 COMPOSE = docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env
@@ -31,6 +31,7 @@ help:
 	@echo "  make backend-test    Alias for backend-build (runs Failsafe Testcontainers)"
 	@echo "  make backend-api     Run api-server on :8080"
 	@echo "  make backend-config  Run config-server on :8888"
+	@echo "  make openapi         Regenerate frozen OpenAPI YAML under docs/api/ (Docker)"
 	@echo ""
 	@echo "  make docker-up       Start full stack (compose + .env)"
 	@echo "  make docker-down     Stop stack and remove containers"
@@ -91,6 +92,9 @@ backend-api:
 
 backend-config:
 	mvn -f backend/config-server/pom.xml spring-boot:run
+
+openapi:
+	./backend/scripts/generate-openapi.sh
 
 # Docker Compose full stack (SPEC §8)
 docker-up:

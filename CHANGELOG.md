@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Frozen OpenAPI contracts under `docs/api/` (`api-server.yaml`) with `make openapi` (`backend/scripts/generate-openapi.sh`) and IT drift check against live springdoc (#125)
 - OpenAPI 3 + Swagger UI on `api-server` via springdoc (`/v3/api-docs`, `/swagger-ui`), with API key / bearer security schemes and public access to the docs endpoints (#123)
 - News Radar Config Server integration reference: `docs/integrations/news-radar-config-server.md` plus `examples/news-radar-config/` (stdlib Go `GET` client, `demo.sh` curl smoke) for promote → JDBC → Environment JSON round-trip (#66)
 - Config Server refresh/environment proxy: `POST /api/v1/config/refresh/{application}` → Config Server `/actuator/refresh`, optional `GET /api/v1/config/{application}/{profile}`; API key scopes `config:refresh` / `config:read` (JWT ADMIN/DEVELOPER allowed); unreachable Config Server → 502; MockWebServer client + auth ITs (#65)
