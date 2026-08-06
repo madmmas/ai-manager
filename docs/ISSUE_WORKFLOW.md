@@ -52,8 +52,17 @@ This document describes how to implement the open-source roadmap for **AIPlane**
 | [#109](https://github.com/madmmas/aiplane/issues/109) | guardrail standalone + federated CSS/Tailwind | `fix/guardrail-standalone-federated-css` | Hygiene | Done |
 | [#110](https://github.com/madmmas/aiplane/issues/110) | user-manager standalone + federated CSS/Tailwind | `fix/user-manager-standalone-federated-css` | Hygiene | Done |
 | [#111](https://github.com/madmmas/aiplane/issues/111) | usages-data standalone + federated CSS/Tailwind | `fix/usages-data-standalone-federated-css` | Hygiene | Done |
+| [#100](https://github.com/madmmas/aiplane/issues/100) | Microservices Migration (Strangler Fig) | — | Microservices | Open (via [#101](https://github.com/madmmas/aiplane/issues/101)–[#104](https://github.com/madmmas/aiplane/issues/104), [#127](https://github.com/madmmas/aiplane/issues/127)–[#130](https://github.com/madmmas/aiplane/issues/130)) |
+| [#101](https://github.com/madmmas/aiplane/issues/101) | Phase 0 — Gateway + observability baseline | `feat/phase-0-gateway-observability` | Microservices | Open |
+| [#102](https://github.com/madmmas/aiplane/issues/102) | Phase 1 — Extract guardrail-service | `feat/phase-1-guardrail-service` | Microservices | Open |
+| [#103](https://github.com/madmmas/aiplane/issues/103) | Phase 2 — Extract usage-service | `feat/phase-2-usage-service` | Microservices | Open |
+| [#104](https://github.com/madmmas/aiplane/issues/104) | Phase 2.5 — graphql-bff aggregation | `feat/phase-2.5-graphql-bff` | Microservices | Open |
+| [#127](https://github.com/madmmas/aiplane/issues/127) | Phase 3 — Extract prompt-manager-service | `feat/phase-3-prompt-manager-service` | Microservices | Open |
+| [#128](https://github.com/madmmas/aiplane/issues/128) | Phase 4 — Extract user-management-service | `feat/phase-4-user-management-service` | Microservices | Open |
+| [#129](https://github.com/madmmas/aiplane/issues/129) | Phase 5 — Extract authentication-service | `feat/phase-5-authentication-service` | Microservices | Open |
+| [#130](https://github.com/madmmas/aiplane/issues/130) | Phase 6 — Decommission legacy api-server | `chore/phase-6-decommission-api-server` | Microservices | Open |
 
-**Phase 0–5 complete** (#8–#13 foundation, #50–#53, #54–#56, #57–#59, #60–#62, #63–#66). **MFE CSS dual-mode complete** (#107 via #108–#111). Also available: Phase 6 Advanced (PII / LLM-judge guardrails, playground compare, CSV export, CI prompt deploy), or host shell work to wire real cookie auth + live API (dashboard still defaults to `useMocks: true`).
+**Phase 0–5 complete** (#8–#13 foundation, #50–#53, #54–#56, #57–#59, #60–#62, #63–#66). **MFE CSS dual-mode complete** (#107 via #108–#111). **Next:** microservices Strangler Fig extraction (#100) — gateway → guardrail → usage → graphql-bff → prompt → user → auth → decommission (`docs/MICROSERVICES_PLAN.md`). Also available: Phase 6 Advanced (PII / LLM-judge guardrails, playground compare, CSV export, CI prompt deploy), or host shell work to wire real cookie auth + live API (dashboard still defaults to `useMocks: true`).
 
 ---
 
@@ -448,7 +457,7 @@ aiplane/
 ## Tips
 
 - **One PR per issue** keeps reviews small and CI fast
-- **Phases 0–5 are merged** — foundation through Config Server; next frontend hygiene is MFE CSS dual-mode (#107–#111), then Phase 6 or shell/auth polish
+- **Phases 0–5 are merged** — foundation through Config Server; MFE CSS dual-mode (#107–#111) is done; next backend track is microservices extraction (#100 / #101–#104, #127–#130)
 - **Do not commit `mock/files 2/`** — duplicate copies; use `mock/icons/` only
 - **Keep dashboard UI work scoped** — host shell (#10) is separate from domain MFEs (prompt/guardrail/usage/users)
 - **Each remote must work two ways** — standalone on its Vite port and federated in the dashboard; CSS wiring is tracked in #107–#111
