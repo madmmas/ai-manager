@@ -20,7 +20,7 @@ proposing structural changes.
 - Lint/format: Biome (not ESLint/Prettier)
 - Git hooks: Husky + lint-staged
 - Package manager: pnpm 9.x — never use npm or yarn commands or lockfiles
-- Node: >=18 (see `.nvmrc` for the pinned version)
+- Node: >=22.22.2 (see `.nvmrc` for the pinned version; required by jsdom 30+)
 
 ## Monorepo layout
 - `apps/dashboard` — host app (port 5173), loads all remotes via Module Federation
