@@ -38,7 +38,7 @@ Each remote is meant to work **standalone** (its own Vite port) and as a **feder
 
 ## Prerequisites
 
-- **Node.js** ≥ 18 (see [`.nvmrc`](.nvmrc) for recommended version)
+- **Node.js** ≥ 22 (see [`.nvmrc`](.nvmrc) for recommended version)
 - **pnpm** 9.x (recommended; project uses `packageManager: "pnpm@9.14.2"`)
 - **JDK 21** + **Maven 3.9+** (for `backend/`)
 
