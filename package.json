@@ -22,19 +22,19 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1",
+    "@testing-library/user-event": "^14.6.5",
     "@vitejs/plugin-react": "^4.3.4",
-    "@vitest/coverage-v8": "^4.1.10",
-    "concurrently": "^10.0.4",
+    "@vitest/coverage-v8": "^4.1.11",
+    "concurrently": "^10.0.5",
     "husky": "^9.1.7",
     "jsdom": "^30.0.1",
-    "lint-staged": "^17.2.0",
+    "lint-staged": "^17.3.0",
     "msw": "^2.15.0",
-    "turbo": "^2.10.7",
+    "turbo": "^2.10.11",
     "vite": "^6.4.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json}": "biome check --write --no-errors-on-unmatched"
